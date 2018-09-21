@@ -1,0 +1,16 @@
+{
+    "connectionRetryTimes": 3,
+    "connectionRetryInterval": 2000,
+    "tasks": [{
+        "hosts": ["192.168.1.133:8088"],
+        "type": "activeDetection",
+        "taskArguments": "192.168.1.1/27",
+        "interval": 600000
+    },
+    {
+        "hosts": ["192.168.1.133:8087"],
+        "type": "passiveDetection",
+        "taskArguments": "-G 60",
+        "interval": 600000
+    }]
+}
