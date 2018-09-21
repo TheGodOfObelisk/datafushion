@@ -190,7 +190,8 @@ class switch_case(object):
 						error_info = sys.exc_info()
 						if len(error_info) > 1:
 							print(str(error_info[0]) + ' ' + str(error_info[1]))
-					#2.更新INJECTION表,插入一个注入，与本次循环所处理的主机相关联
+					#2.更新INJECTION表,SAT注入开始。
+					#插入一个注入，与本次循环所处理的主机相关联
 					try:
 						cursor_target.execute("""
 						select ID from {username}.HOST where IP=:ip
@@ -207,9 +208,10 @@ class switch_case(object):
 							print(str(error_info[0]) + ' ' + str(error_info[1]))
 					try:
 						in_id_t = str(uuid.uuid1())#暂存，用于后面更新注入
+						host_id = result[0][0]
 						cursor_target.execute("""
 						insert into {username}.INJECTION(ID,UPDATED,TARGET_ID,PERIOD) values(:in_id,'1',:h_id,'start')
-						""".format(username=db_username_target),in_id=in_id_t,h_id=result[0][0])
+						""".format(username=db_username_target),in_id=in_id_t,h_id=host_id)
 					except:
 						print("Error:fail to insert new injection")
 						error_info = sys.exc_info()
@@ -274,11 +276,23 @@ class switch_case(object):
 						if len(error_info) > 1:
 							print(str(error_info[0]) + ' ' + str(error_info[1]))
 					try:
+						site_id_t = result[0][0]#如果已经有了的话，插入会失败
 						cursor_target.execute("""
 						insert into {username}.SITE_SEGMENT_REL(ID,UPDATED,SITE_ID,SEGMENT_ID,TRAFFIC) values(:id,'1',:site_id,:seg_id,'0.06kb/s')
-						""".format(username=db_username_target),id=str(uuid.uuid1()),site_id=result[0][0],seg_id=segment_id)
+						""".format(username=db_username_target),id=str(uuid.uuid1()),site_id=site_id_t,seg_id=segment_id)
 					except:
 						print("Error:fail to update SITE_SEGMENT_REL table")
+						error_info = sys.exc_info()
+						if len(error_info) > 1:
+							print(str(error_info[0]) + ' ' + str(error_info[1]))
+					#网段主机关系表
+					#<class 'cx_Oracle.DatabaseError'> ORA-01722: invalid number   ???
+					try:
+						cursor_target.execute("""
+						insert into {username}.SEGMENT_HOST_REL(ID,UPDATED,SEGMENT_ID,HOST_ID,TRAFFIC) values(:id,'1',:sg_id,:ho_id,'0.02kb/s')
+						""".format(username=db_username_target),id=str(uuid.uuid1()),sg_id=segment_id,ho_id=host_id)
+					except:
+						print("Error:fail to update SEGMENT_HOST_REL table")
 						error_info = sys.exc_info()
 						if len(error_info) > 1:
 							print(str(error_info[0]) + ' ' + str(error_info[1]))
