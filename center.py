@@ -11,7 +11,7 @@ import cx_Oracle
 import re
 import json
 import uuid
-import unittest
+#import unittest
 
 # ====== config ======
 HOST = 'localhost'
@@ -126,7 +126,7 @@ class switch_case(object):
 						exception
 								when NO_DATA_FOUND then
 									insert into {username}.HOST values(:ip,0,0,0,NULL,0,NULL,NULL,0,NULL,
-														0,0,1,0,0,0,0,0,0,NULL);
+														0,0,2,0,0,0,0,0,0,NULL);
 						end;
 					""".format(username=db_username), ip=localip)
 		except:
@@ -196,7 +196,10 @@ class switch_case(object):
 						select ID from {username}.HOST where IP=:ip
 						""".format(username=db_username_target),ip=host_ip)
 						result = cursor_target.fetchall()
-						assertTrue(len(result) == 1)#取出来只能有一个
+						#assertTrue(len(result) == 1)#取出来只能有一个
+						if len(result) != 1:
+							print("Error:more than one record noticing the same ip")
+							#....
 					except:
 						print("Error:fail to fetch ID from HOST")
 						error_info = sys.exc_info()
@@ -218,23 +221,69 @@ class switch_case(object):
 					prefix = (host_subnet.split('/',1))[1]
 					subnet_addr = (host_subnet.split('/',1))[0]
 					mask = prefix2mask(int(prefix))
+					segment_id = str(uuid.uuid1())
 					try:
 						cursor_target.execute("""
 						declare
 						t_count number(10);
 						begin
 							select count(*) into t_count from {username}.SEGMENT where NET=:sba;
-							if t_count==0 then
+							if t_count=0 then
 								insert into {username}.SEGMENT(ID,UPDATED,NET,MASK) values(:id,'1',:sba,:tmask);
 							end if;
 						end;
-						""".format(username=db_username_target),sba=subnet_addr,tmask=mask)
+						""".format(username=db_username_target),id=segment_id,sba=subnet_addr,tmask=mask)
 					except:
 						print("Error:fail to initialize the SEGMENT table")
 						error_info = sys.exc_info()
 						if len(error_info) > 1:
 							print(str(error_info[0]) + ' ' + str(error_info[1]))
+					#初始化站点表
+					#site_id = str(uuid.uuid1())
+					#考虑到更新的情况，site_id要从数据中取，为填网段站点关系表做准备
+					site_name = "default"#最大长度为10
+					try:
+						cursor_target.execute("""
+						declare
+						t_count number(10);
+						begin
+							select count(*) into t_count from {username}.SITE where NAME=:name;
+							if t_count=0 then
+								insert into {username}.SITE(ID,UPDATED,STATUS,NAME,DETAIL,ADDRESS,NET,TYPE) values(:id,'1','online',:name,NULL,NULL,:subnet,'2');
+							else
+								update {username}.SITE set NET=:subnet,UPDATED=1,STATUS='online';
+							end if;
+						end;
+						""".format(username=db_username_target),id=str(uuid.uuid1()),name=site_name,subnet=subnet_addr)
+					except:
+						print("Error:fail to initialize the SITE table")
+						error_info = sys.exc_info()
+						if len(error_info) > 1:
+							print(str(error_info[0]) + ' ' + str(error_info[1]))
+					#准备填网段站点关系表
+					try:
+						cursor_target.execute("""
+						select ID from {username}.SITE where NAME=:name
+						""".format(username=db_username_target),name=site_name)
+						result = cursor_target.fetchall()
+						if len(result) != 1:
+							print("Error:more than one record noticing the same site name")
+					except:
+						print("Error:fail to fetch id from the SITE table")
+						error_info = sys.exc_info()
+						if len(error_info) > 1:
+							print(str(error_info[0]) + ' ' + str(error_info[1]))
+					try:
+						cursor_target.execute("""
+						insert into {username}.SITE_SEGMENT_REL(ID,UPDATED,SITE_ID,SEGMENT_ID,TRAFFIC) values(:id,'1',:site_id,:seg_id,'0.06kb/s')
+						""".format(username=db_username_target),id=str(uuid.uuid1()),site_id=result[0][0],seg_id=segment_id)
+					except:
+						print("Error:fail to update SITE_SEGMENT_REL table")
+						error_info = sys.exc_info()
+						if len(error_info) > 1:
+							print(str(error_info[0]) + ' ' + str(error_info[1]))
 					conn.commit()
+					conn_target.commit()
     #correspond to 2
     def case_start_detect_live_host(self, msg):
 		print("case_start_detect_live_host: " + msg)
@@ -244,7 +293,6 @@ class switch_case(object):
 			select * from {username}.HOST
 			""".format(username = db_username))
 			result = cursor.fetchall()
-			print(result)
 		except:
 			error_info = sys.exc_info()
 			if len(error_info) > 1:
@@ -260,7 +308,6 @@ class switch_case(object):
 			select * from {username}.HOST
 			""".format(username = db_username_target))
 			result = cursor_target.fetchall()
-			print(result)
 		except:
 			error_info = sys.exc_info()
 			if len(error_info) > 1:
