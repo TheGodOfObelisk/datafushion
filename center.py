@@ -208,11 +208,19 @@ class switch_case(object):
 						if len(error_info) > 1:
 							print(str(error_info[0]) + ' ' + str(error_info[1]))
 					try:
-						in_id_t = str(uuid.uuid1())#暂存，用于后面更新注入
+						#in_id_t = str(uuid.uuid1())#暂存，用于后面更新注入
 						host_id = result[0][0]
 						cursor_target.execute("""
-						insert into {username}.INJECTION(ID,UPDATED,TARGET_ID,PERIOD) values(:in_id,'1',:h_id,'start')
-						""".format(username=db_username_target),in_id=in_id_t,h_id=host_id)
+						declare t_count number(10);
+						begin
+							select count(*) into t_count from {username}.INJECTION where TARGET_ID=:h_id;
+							if t_count=0 then
+								insert into {username}.INJECTION(ID,UPDATED,TARGET_ID,PERIOD) values(:in_id,'1',:h_id,'start');
+							else
+								update {username}.INJECTION set UPDATED=1,PERIOD='start';
+							end if;
+						end;
+						""".format(username=db_username_target),in_id=str(uuid.uuid1()),h_id=host_id)
 					except:
 						print("Error:fail to insert new injection")
 						error_info = sys.exc_info()
@@ -347,6 +355,29 @@ class switch_case(object):
 						""".format(username=db_username_target),id=str(uuid.uuid1()),ho_id=host_id,time=now_time)
 					except:
 						print("Error:fail to update the ENTITY table")
+						error_info = sys.exc_info()
+						if len(error_info) > 1:
+							print(str(error_info[0]) + ' ' + str(error_info[1]))
+					#再次更新注入表，先取出本轮的注入id号
+					try:
+						cursor_target.execute("""
+						select ID from {username}.INJECTION where TARGET_ID=:ho_id
+						""".format(username=db_username_target),ho_id=host_id)
+						result = cursor_target.fetchall()
+						if len(result) > 1:
+							print("Error:more than one record noticing the same host in INJECTION table")
+						injection_id = result[0][0]
+					except:
+						print("Error:fail to fetch ID from the INJECTION table")
+						error_info = sys.exc_info()
+						if len(error_info) > 1:
+							print(str(error_info[0]) + ' ' + str(error_info[1]))
+					try:
+						cursor_target.execute("""
+						update {username}.INJECTION set UPDATED=1,PERIOD='done' where TARGET_ID=:ho_id and ID=:in_id
+						""".format(username=db_username_target),ho_id=host_id,in_id=injection_id)
+					except:
+						print("Error:fail to update the INJECTION table")
 						error_info = sys.exc_info()
 						if len(error_info) > 1:
 							print(str(error_info[0]) + ' ' + str(error_info[1]))
