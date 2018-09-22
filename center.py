@@ -223,18 +223,18 @@ class switch_case(object):
 					prefix = (host_subnet.split('/',1))[1]
 					subnet_addr = (host_subnet.split('/',1))[0]
 					mask = prefix2mask(int(prefix))
-					segment_id = str(uuid.uuid1())
+					#segment_id = str(uuid.uuid1())
 					try:
 						cursor_target.execute("""
 						declare
 						t_count number(10);
 						begin
-							select count(*) into t_count from {username}.SEGMENT where NET=:sba;
+							select count(*) into t_count from {username}.SEGMENT where NET=:sba and MASK=:tmask;
 							if t_count=0 then
 								insert into {username}.SEGMENT(ID,UPDATED,NET,MASK) values(:id,'1',:sba,:tmask);
 							end if;
 						end;
-						""".format(username=db_username_target),id=segment_id,sba=subnet_addr,tmask=mask)
+						""".format(username=db_username_target),id=str(uuid.uuid1()),sba=subnet_addr,tmask=mask)
 					except:
 						print("Error:fail to initialize the SEGMENT table")
 						error_info = sys.exc_info()
@@ -263,12 +263,28 @@ class switch_case(object):
 						if len(error_info) > 1:
 							print(str(error_info[0]) + ' ' + str(error_info[1]))
 					#准备填网段站点关系表
+					#这些ID号必须现取，完整性约束
+					#取网段ID号
+					try:
+						cursor_target.execute("""
+						select ID from {username}.SEGMENT where NET=:sba and MASK=:tmask
+						""".format(username=db_username_target),sba=subnet_addr,tmask=mask)
+						result = cursor_target.fetchall()
+						if len(result) > 1:
+							print("Error:more than one record noticing the same segment")
+						segment_id = result[0][0]#存网段ID号
+					except:
+						print("Error:fail to fetch id from the SEGMENT table")
+						error_info = sys.exc_info()
+						if len(error_info) > 1:
+							print(str(error_info[0]) + ' ' + str(error_info[1]))
+					#取站点ID号
 					try:
 						cursor_target.execute("""
 						select ID from {username}.SITE where NAME=:name
 						""".format(username=db_username_target),name=site_name)
 						result = cursor_target.fetchall()
-						if len(result) != 1:
+						if len(result) > 1:
 							print("Error:more than one record noticing the same site name")
 					except:
 						print("Error:fail to fetch id from the SITE table")
@@ -278,7 +294,15 @@ class switch_case(object):
 					try:
 						site_id_t = result[0][0]#如果已经有了的话，插入会失败
 						cursor_target.execute("""
-						insert into {username}.SITE_SEGMENT_REL(ID,UPDATED,SITE_ID,SEGMENT_ID,TRAFFIC) values(:id,'1',:site_id,:seg_id,'0.06kb/s')
+						declare t_count number(10);
+						begin
+							select count(*) into t_count from {username}.SITE_SEGMENT_REL where SITE_ID=:site_id and SEGMENT_ID=:seg_id;
+							if t_count=0 then
+								insert into {username}.SITE_SEGMENT_REL(ID,UPDATED,SITE_ID,SEGMENT_ID,TRAFFIC) values(:id,'1',:site_id,:seg_id,'0.06kb/s');
+							else
+								update {username}.SITE_SEGMENT_REL set UPDATED=1;
+							end if;
+						end;
 						""".format(username=db_username_target),id=str(uuid.uuid1()),site_id=site_id_t,seg_id=segment_id)
 					except:
 						print("Error:fail to update SITE_SEGMENT_REL table")
@@ -286,16 +310,24 @@ class switch_case(object):
 						if len(error_info) > 1:
 							print(str(error_info[0]) + ' ' + str(error_info[1]))
 					#网段主机关系表
-					#<class 'cx_Oracle.DatabaseError'> ORA-01722: invalid number   ???
 					try:
 						cursor_target.execute("""
-						insert into {username}.SEGMENT_HOST_REL(ID,UPDATED,SEGMENT_ID,HOST_ID,TRAFFIC) values(:id,'1',:sg_id,:ho_id,'0.02kb/s')
+						declare t_count number(10);
+						begin
+							select count(*) into t_count from {username}.SEGMENT_HOST_REL where SEGMENT_ID=:sg_id and HOST_ID=:ho_id;
+							if t_count=0 then
+								insert into {username}.SEGMENT_HOST_REL(ID,UPDATED,SEGMENT_ID,HOST_ID,TRAFFIC) values(:id,'1',:sg_id,:ho_id,'0.02kb/s');
+							else
+								update {username}.SEGMENT_HOST_REL set UPDATED=1;
+							end if;
+						end;
 						""".format(username=db_username_target),id=str(uuid.uuid1()),sg_id=segment_id,ho_id=host_id)
 					except:
 						print("Error:fail to update SEGMENT_HOST_REL table")
 						error_info = sys.exc_info()
 						if len(error_info) > 1:
 							print(str(error_info[0]) + ' ' + str(error_info[1]))
+					
 					conn.commit()
 					conn_target.commit()
     #correspond to 2
