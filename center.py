@@ -11,6 +11,7 @@ import cx_Oracle
 import re
 import json
 import uuid
+import datetime
 #import unittest
 
 # ====== config ======
@@ -327,7 +328,28 @@ class switch_case(object):
 						error_info = sys.exc_info()
 						if len(error_info) > 1:
 							print(str(error_info[0]) + ' ' + str(error_info[1]))
+					#工具表	ps：工具关系表怎么弄？模拟的程序中把工具关系表的更新设在构建自组织网络任务中
+					#工具表中的编号何解？臆测1代表主动探测器，2代表被动探测器
+					now_time_t = datetime.datetime.now()
+					now_time = datetime.datetime.strftime(now_time_t,'%Y/%m/%d %H:%M:%S')#转为sql需要的日期形式
 					
+					try:
+						cursor_target.execute("""
+						declare t_count number(10);
+						begin
+							select count(*) into t_count from {username}.ENTITY where HOST_ID=:ho_id;
+							if t_count=0 then
+								insert into {username}.ENTITY(ID,UPDATED,PLATFORM,LOAD,DESCRIPTION,ONLINE_TIME,HOST_ID,NUM,STATUS) values(:id,'1',NULL,NULL,NULL,TO_TIMESTAMP(:time,'YYYY/MM/DD HH24:MI:SS'),:ho_id,'1','online');
+							else
+								update {username}.ENTITY set UPDATED=1,STATUS='online';
+							end if;
+						end;
+						""".format(username=db_username_target),id=str(uuid.uuid1()),ho_id=host_id,time=now_time)
+					except:
+						print("Error:fail to update the ENTITY table")
+						error_info = sys.exc_info()
+						if len(error_info) > 1:
+							print(str(error_info[0]) + ' ' + str(error_info[1]))
 					conn.commit()
 					conn_target.commit()
     #correspond to 2

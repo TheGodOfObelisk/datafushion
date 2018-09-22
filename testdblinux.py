@@ -1,6 +1,7 @@
 import cx_Oracle
 import sys
 import uuid
+import datetime
 conn =cx_Oracle.connect('study/study@192.168.1.52:1521/ORCL')
 
 cursor = conn.cursor()
@@ -25,18 +26,9 @@ conn.commit()
 cursor.close()
 conn.close()
 
+now_time = datetime.datetime.now()
+now_time1 = datetime.datetime.strftime(now_time,'%Y/%m/%d %H:%M:%S')
+print(now_time)
+print(now_time1)
 
 sys.exit(0)#just test
-
-
-declare
-						t_count number(10);
-						begin
-							select count(*) into t_count from {username}.SITE where NAME=:name;
-							if t_count=0 then
-								insert into {username}.SITE(ID,UPDATED,STATUS,NAME,DETAIL,ADDRESS,NET,TYPE) values(:id,'1','online',:name,NULL,NULL,:subnet,'2');
-							else
-								update {username}.SITE set NET=:subnet,UPDATED=1,STATUS='online';
-							end if;
-						end;
-						""".format(username=db_username_target),id=str(uuid.uuid1()),name=site_name,subnet=subnet_addr)
