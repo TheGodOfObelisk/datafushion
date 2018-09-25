@@ -1,7 +1,7 @@
 import cx_Oracle
 import sys
 import uuid
-conn =cx_Oracle.connect('study/study@192.168.1.52:1521/ORCL')
+conn =cx_Oracle.connect('study/study@192.168.1.50:1521/ORCL')
 
 cursor = conn.cursor()
 TIP = '192.168.1.157'

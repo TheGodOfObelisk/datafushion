@@ -1,0 +1,75 @@
+lw@lw-B85M-D3V:~/数据融合917/datafusion$ python center.py PROJECT/PROJECT@192.168.1.50:1521/ORCL study/study@192.168.1.50:1521/ORCL
+bind 3368,ready to use
+Got connection from  ('127.0.0.1', 20460)
+HTTP/1.1 101 Switching Protocols
+Upgrade:websocket
+Connection: Upgrade
+Sec-WebSocket-Accept: JqpIMV5QH+9dgYKrKfCiJVKdtdQ=
+WebSocket-Location: ws://localhost:3368/chat
+WebSocket-Protocol:chat
+
+
+handshake success
+this connection has been initialized, now attempt to start it
+thread is running
+ new thread for client ...
+init_agents
+1
+ready to call function case_init_agents
+case_fun_init_agents: go!
+Error:fail to update SITE_SEGMENT_REL table
+<class 'cx_Oracle.DatabaseError'> ORA-06550: �� 6 ��, �� 74 ��: 
+PL/SQL: ORA-00904: "TRAFFIC": ��ʶ����Ч
+ORA-06550: �� 6 ��, �� 9 ��: 
+PL/SQL: SQL Statement ignored
+Error:fail to update SEGMENT_HOST_REL table
+<class 'cx_Oracle.DatabaseError'> ORA-01722: ��Ч����
+ORA-06512: �� line 6
+Error:fail to update SITE_SEGMENT_REL table
+<class 'cx_Oracle.DatabaseError'> ORA-06550: �� 6 ��, �� 74 ��: 
+PL/SQL: ORA-00904: "TRAFFIC": ��ʶ����Ч
+ORA-06550: �� 6 ��, �� 9 ��: 
+PL/SQL: SQL Statement ignored
+Error:fail to update SEGMENT_HOST_REL table
+<class 'cx_Oracle.DatabaseError'> ORA-01722: ��Ч����
+ORA-06512: �� line 6
+Error:fail to update SITE_SEGMENT_REL table
+<class 'cx_Oracle.DatabaseError'> ORA-06550: �� 6 ��, �� 74 ��: 
+PL/SQL: ORA-00904: "TRAFFIC": ��ʶ����Ч
+ORA-06550: �� 6 ��, �� 9 ��: 
+PL/SQL: SQL Statement ignored
+Error:fail to update SEGMENT_HOST_REL table
+<class 'cx_Oracle.DatabaseError'> ORA-01722: ��Ч����
+ORA-06512: �� line 6
+thread is running
+start_detect_live_host ['192.168.1.133','192.168.1.134','192.168.1.135']
+2
+ready to call function case_start_detect_live_host
+case_start_detect_live_host: ['192.168.1.133','192.168.1.134','192.168.1.135']
+thread is running
+end_detect_live_host
+1
+ready to call function case_end_detect_live_host
+case_end_detect_live_host: go!
+Error:fail to fetch id from the HOST table
+<type 'exceptions.IndexError'> list index out of range
+Error:fail to fetch id from the ENTITY table
+<type 'exceptions.IndexError'> list index out of range
+Error:fail to insert new task into the TASK table
+<class 'cx_Oracle.IntegrityError'> ORA-01400: �޷��� NULL ���� ("STUDY"."TASK"."EXECUTOR_ID")
+ORA-06512: �� line 6
+Error:fail to fetch id from the HOST table
+<type 'exceptions.IndexError'> list index out of range
+Error:fail to fetch id from the ENTITY table
+<type 'exceptions.IndexError'> list index out of range
+Error:fail to insert new task into the TASK table
+<class 'cx_Oracle.IntegrityError'> ORA-01400: �޷��� NULL ���� ("STUDY"."TASK"."EXECUTOR_ID")
+ORA-06512: �� line 6
+Error:fail to fetch id from the HOST table
+<type 'exceptions.IndexError'> list index out of range
+Error:fail to fetch id from the ENTITY table
+<type 'exceptions.IndexError'> list index out of range
+Error:fail to insert new task into the TASK table
+<class 'cx_Oracle.IntegrityError'> ORA-01400: �޷��� NULL ���� ("STUDY"."TASK"."EXECUTOR_ID")
+ORA-06512: �� line 6
+thread is running

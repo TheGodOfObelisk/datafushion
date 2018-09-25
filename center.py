@@ -99,6 +99,7 @@ def prefix2mask(mask_int):
 	return '.'.join(tmpmask)
 
 def GetHostIdByIp(ip):
+	host_id = ""
 	try:
 		cursor_target.execute("""
 		select ID from {username}.HOST where IP=:tip
@@ -115,6 +116,7 @@ def GetHostIdByIp(ip):
 	return host_id
 
 def GetEntityIdByHostId(host_id):
+	entity_id = ""
 	try:
 		cursor_target.execute("""
 		select ID from {username}.ENTITY where HOST_ID=:ho_id
@@ -128,6 +130,7 @@ def GetEntityIdByHostId(host_id):
 		error_info = sys.exc_info()
 		if len(error_info) > 1:
 			print(str(error_info[0]) + ' ' + str(error_info[1]))
+	return entity_id
 
 #承担了更新及插入两种操作
 def UpdateTask(host_id, entity_id, Type, period, process):
@@ -137,10 +140,12 @@ def UpdateTask(host_id, entity_id, Type, period, process):
 		declare t_count number(10);
 		begin
 			select count(*) into t_count from {username}.TASK where EXECUTOR_ID=:e_id and TARGET_ID=:ho_id and TYPE=:tasktype;
-			if t_count=0 then:
+			if t_count=0 then
 				insert into {username}.TASK(ID,UPDATED,EXECUTOR_ID,TYPE,PERIOD,PROCESS,TARGET_ID) values(:id,'1',:e_id,:tasktype,:taskperiod,:taskprocess,:ho_id);
 			else
-				update {username}.TASK set UPDATED=1,PERIOD=:taskperiod,PROCESS=:taskprocess where EXECUTOR_ID=:e_id and TARGET_ID=:ho_id and TYPE=:tasktype
+				update {username}.TASK set UPDATED=1,PERIOD=:taskperiod,PROCESS=:taskprocess where EXECUTOR_ID=:e_id and TARGET_ID=:ho_id and TYPE=:tasktype;
+			end if;
+		end;
 		""".format(username=db_username_target),id=(str(uuid.uuid1())),e_id=entity_id,ho_id=host_id,tasktype=Type,taskperiod=period,taskprocess=process)
 	except:
 		print("Error:fail to insert new task into the TASK table")
@@ -447,11 +452,11 @@ class switch_case(object):
 	#输入参数 形同"['192.168.0.1','192.168.0.2']"的字符串
 	#封装过后的还没有测
     def case_start_detect_live_host(self, ips):
-		print("case_start_detect_live_host: " + ips)
+        print("case_start_detect_live_host: " + ips)
 		#准备开始探测，将任务插入task表，要先取执行本轮任务的主机的id以及执行探测的工具的id
-		reg = re.compile(r'(?<![\.\d])(?:\d{1,3}\.){3}\d{1,3}(?![\.\d])')
-		ips_t = re.findall(reg, ips)
-		for ip in ips_t:
+        reg = re.compile(r'(?<![\.\d])(?:\d{1,3}\.){3}\d{1,3}(?![\.\d])')
+        ips_t = re.findall(reg, ips)
+        for ip in ips_t:
 			#取主机id
 			host_id = GetHostIdByIp(ip)
 			#取该主机对应工具id，按照目前的设计，一个主机仅对应一个工具id（第一轮初始的节点外，后面决策出来的节点也要注册相应的工具）
@@ -459,50 +464,115 @@ class switch_case(object):
 			#插入新任务（或者更新任务，仿照模拟程序写在一个UpdateTask()里面）
 			#判断重复不仅需要看工具id和主机id，还要看任务类型
 			UpdateTask(host_id, entity_id, "嗅探分析", "start", "正在探测存活主机")
-		conn.commit()
-		conn_target.commit()
-			#the end of for loop
+			#the end of the for loop
+        conn_target.commit()
 		#任务表更新完成
 	#end of editing
 	
     #correspond to 3
 	#开始文件传输，本条指令在中心节点给个体节点发送探测指令时触发
-	#本指令
+	#本指令根据个体节点ip地址更新task表
     def case_start_file_transmitting(self, ips):
         print("case_start_file_transmitting: " + ips)
 		#开始文件传输
-		reg = re.compile(r'(?<![\.\d])(?:\d{1,3}\.){3}\d{1,3}(?![\.\d])')
-		ips_t = re.findall(reg, ips)
-		for ip in ips:
+		#这里的缩进可能有问题
+        reg = re.compile(r'(?<![\.\d])(?:\d{1,3}\.){3}\d{1,3}(?![\.\d])')
+        ips_t = re.findall(reg, ips)
+        for ip in ips:
 			#取主机id
 			host_id = GetHostIdByIp(ip)
 			#取该主机对应工具id，按照目前的设计，一个主机仅对应一个工具id（第一轮初始的节点外，后面决策出来的节点也要注册相应的工具，可以写在决策完成的指令中）
-			entity_id = GetEntityByHostId(host_id)
+			entity_id = GetEntityIdByHostId(host_id)
 			UpdateTask(host_id, entity_id, "文件传输", "start", "正在回传探测结果")
-        time.sleep(1)
+        conn_target.commit()
 
     #correspond to 4
-    def case_end_file_transmitting(self, msg):
-        print('case_end_file_transmitting: ' + msg)
+	#结束文件传输，本条指令在中心节点收集到本轮所有的个体节点的回复时触发
+	#本指令根据个体节点ip地址更新task表
+    def case_end_file_transmitting(self, ips):
+        print('case_end_file_transmitting: ' + ips)
+        reg = re.compile(r'(?<![\.\d])(?:\d{1,3}\.){3}\d{1,3}(?![\.\d])')
+        ips_t = re.findall(reg, ips)
+        for ip in ips:
+			#取主机id
+			host_id = GetHostIdByIp(ip)
+			#取该主机对应工具的id
+			entity_id = GetEntityIdByHostId(host_id)
+			UpdateTask(host_id, entity_id, "文件传输", "done", "正在回传探测结果")
+        conn_target.commit()
 
 	#本条指令在中心节点收到数据融合第一部分的反馈时执行（我们的数据的主机表内容已经基本填完）
 	#由本条指令把主机信息从我们的数据库搬运到别人的数据库，此外还要填上路由器表以及网段路由关系表
 	#最后更新TASK表
     #correspond to 5   one argument indicating the directory
-    def case_end_detect_live_host(self, msg):
-        print('case_end_detect_live_host: ' + msg)
+    def case_end_detect_live_host(self, ips):
+        print('case_end_detect_live_host: ' + ips)
+		#填充HOST表
+		#......
+		#填充ROUTER表
+		#......
+		#填充SEGMENT_ROUTER_REL表
+		#......
+		#更新TASK表
+        reg = re.compile(r'(?<![\.\d])(?:\d{1,3}\.){3}\d{1,3}(?![\.\d])')
+        ips_t = re.findall(reg, ips)
+        for ip in ips:
+			#取主机id
+			host_id = GetHostIdByIp(ip)
+			#取该主机对应工具的id
+			entity_id = GetEntityIdByHostId(host_id)
+			UpdateTask(host_id, entity_id, "嗅探分析", "done", "正在探测存活主机")
+        conn.commit()
+        conn_target.commit()
 
+	#本条指令在上条指令获得反馈之后执行
+	#开始进行拓扑还原
     #correspond to 6
-    def case_start_recover_topo(self, msg):
-        print('case_start_recover_topo: ' + msg)
+    def case_start_recover_topo(self, ips):
+        print('case_start_recover_topo: ' + ips)
+		#更新任务
+        reg = re.compile(r'(?<![\.\d])(?:\d{1,3}\.){3}\d{1,3}(?![\.\d])')
+        ips_t = re.findall(reg, ips)
+        for ip in ips:
+			#取主机id
+			host_id = GetHostIdByIp(ip)
+			#取该主机对应工具的id
+			entity_id = GetEntityIdByHostId(host_id)
+			UpdateTask(host_id, entity_id, "嗅探分析", "start", "正在还原网络拓扑")
+        #填充SEGMENT表
+		#......
+		#填充SEGMENT_HOST_REL表
+		#......
+        conn.commit()
+        conn_target.commit()
 
+	#本条指令在上条指令获得反馈之后执行
     #correspond to 7
-    def case_end_recover_topo(self, msg):
-        print('case_end_recover_topo: ' + msg)
+    def case_end_recover_topo(self, ips):
+        print('case_end_recover_topo: ' + ips)
+        reg = re.compile(r'(?<![\.\d])(?:\d{1,3}\.){3}\d{1,3}(?![\.\d])')
+        ips_t = re.findall(reg, ips)
+        for ip in ips:
+			#取主机id
+			host_id = GetHostIdByIp(ip)
+			#取该主机对应工具的id
+			entity_id = GetEntityIdByHostId(host_id)
+			UpdateTask(host_id, entity_id, "嗅探分析", "done", "正在还原网络拓扑")
+        conn_target.commit()
 
+	#本条指令在执行准备调用数据融合的第二个模块的时候执行
     #correspond to 8
-    def case_start_agent_deciding(self, msg):
-        print('case_start_agent_deciding: ' + msg)
+    def case_start_agent_deciding(self, ips):
+        print('case_start_agent_deciding: ' + ips)
+        reg = re.compile(r'(?<![\.\d])(?:\d{1,3}\.){3}\d{1,3}(?![\.\d])')
+        ips_t = re.findall(reg, ips)
+        for ip in ips:
+			#取主机id
+			host_id = GetHostIdByIp(ip)
+			#取该主机对应工具的id
+			entity_id = GetEntityIdByHostId(host_id)
+			UpdateTask(host_id, entity_id, "嗅探分析", "start", "正在决策选取新的Agent")
+        conn_target.commit()
 
     #correspond to 9
     def case_end_agent_deciding(self, msg):
@@ -550,14 +620,9 @@ class Th(threading.Thread):
 						if item == command:
 							continue
 						args.append(item)
-					if command == "start_detect_live_host":
+					if command == "start_detect_live_host" or command == "start_file_transmitting":
 						if len(args) != 1:
-							print("Error:Incorrect arguments")
-						else:
-							cls.case_to_function(command)(args[0])
-					elif command == "start_file_transmitting":
-						if len(args) != 1:
-							print("Error:Incorrect arguments")
+							print("Error:Incorrect arguments, fail to execute this command")
 						else:
 							cls.case_to_function(command)(args[0])
 					else:
