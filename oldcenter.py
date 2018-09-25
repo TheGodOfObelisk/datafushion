@@ -100,7 +100,6 @@ def prefix2mask(mask_int):
 class switch_case(object):
     def case_to_function(self, case):
         fun_name = "case_" + str(case)
-        print("ready to call function " + fun_name)
         method = getattr(self, fun_name, self.case_default)
         return method
     #plz refer to document "task.odt"
@@ -382,75 +381,42 @@ class switch_case(object):
 						error_info = sys.exc_info()
 						if len(error_info) > 1:
 							print(str(error_info[0]) + ' ' + str(error_info[1]))
-		conn.commit()
-		conn_target.commit()
+					conn.commit()
+					conn_target.commit()
     #correspond to 2
-	#start of editing
-	#本条指令在中心节点给个体节点发探测指令之前执行
-	#将本轮执行探测的主机ip地址以数组的形式传入（中心节点应该知道这个信息）
-	#根据主机ip取主机id
-	#再根据主机id取工具id
-    def case_start_detect_live_host(self, ips):
-		print("case_start_detect_live_host: " + ips)
-		#准备开始探测，将任务插入task表，要先取执行本轮任务的主机的id以及执行探测的工具的id
-		reg = re.compile(r'(?<![\.\d])(?:\d{1,3}\.){3}\d{1,3}(?![\.\d])')
-		ips_t = re.findall(reg, ips)
-		for ip in ips_t:
-			#取主机id
-			print("ip: " + ip)
-			try:
-				cursor_target.execute("""
-				select ID from {username}.HOST where IP=:tip
-				""".format(username=db_username_target),tip=ip)
-				result = cursor_target.fetchall()
-				if len(result) > 1:
-					print("Error:more than one record in HOST table noticing the same ip")
-				host_id = result[0][0]
-			except:
-				print("Error:fail to fetch id from the HOST table")
-				error_info = sys.exc_info()
-				if len(error_info) > 1:
-					print(str(error_info[0]) + ' ' + str(error_info[1]))
-			#取该主机对应工具id，按照目前的设计，一个主机仅对应一个工具id（第一轮初始的节点外，后面决策出来的节点也要注册相应的工具）
-			try:
-				cursor_target.execute("""
-				select ID from {username}.ENTITY where HOST_ID=:ho_id
-				""".format(username=db_username_target),ho_id=host_id)
-				result = cursor_target.fetchall()
-				if len(result) > 1:
-					print("Error:more than one record in ENTITY table referencing to the same host")
-				entity_id = result[0][0]
-			except:
-				print("Error:fail to fetch id from the ENTITY table")
-				error_info = sys.exc_info()
-				if len(error_info) > 1:
-					print(str(error_info[0]) + ' ' + str(error_info[1]))
-			#插入新任务（往后都是更新任务，仿照模拟程序写在一个UpdateTask()里面）
-			try:
-				cursor_target.execute("""
-				declare t_count number(10);
-				begin
-					select count(*) into t_count from {username}.TASK where EXECUTOR_ID=:e_id and TARGET_ID=:ho_id;
-					if t_count=0 then
-						insert into {username}.TASK(ID,UPDATED,EXECUTOR_ID,TYPE,PERIOD,PROCESS,TARGET_ID) values(:id,'1',:e_id,'嗅探分析','start','正在探测存活主机',:ho_id);
-					else
-						update {username}.TASK set UPDATED=1,TYPE='嗅探分析',PERIOD='start',PROCESS='正在探测存活主机' where EXECUTOR_ID=:e_id and TARGET_ID=:ho_id;
-					end if;
-				end;
-				""".format(username=db_username_target),id=(str(uuid.uuid1())),e_id=entity_id,ho_id=host_id)
-			except:
-				print("Error:fail to insert new task into the TASK table")
-				error_info = sys.exc_info()
-				if len(error_info) > 1:
-					print(str(error_info[0]) + ' ' + str(error_info[1]))
+    def case_start_detect_live_host(self, msg):
+		print("case_start_detect_live_host: " + msg)
+		#test of 2 db connections
+		try:
+			cursor.execute("""
+			select * from {username}.HOST
+			""".format(username = db_username))
+			result = cursor.fetchall()
+		except:
+			error_info = sys.exc_info()
+			if len(error_info) > 1:
+				print(str(error_info[0]) + ' ' + str(error_info[1]))
+			sys.exit(1)
+		time.sleep(2)
 		conn.commit()
+		cursor.close()
+		conn.close()
+		#应该不需要线程把数据库连接断开，整个常驻进程退出时才把数据库连接断开
+		try:
+			cursor_target.execute("""
+			select * from {username}.HOST
+			""".format(username = db_username_target))
+			result = cursor_target.fetchall()
+		except:
+			error_info = sys.exc_info()
+			if len(error_info) > 1:
+				print(str(error_info[0]) + ' ' + str(error_info[1]))
+			sys.exit(1)
+		time.sleep(2)
 		conn_target.commit()
-			#the end of for loop
-		#任务表更新完成
-	#end of editing
-	
-	#本条指令在中心节点收到数据融合第一部分的反馈时执行（我们的数据的主机表内容已经基本填完）
-	#由本条指令把主机信息从我们的数据库搬运到别人的数据库，并在更新完主机数据之后更新TASK表
+		cursor_target.close()
+		conn_target.close()
+
     #correspond to 3
     def case_start_file_transmitting(self, msg):
         print("case_start_file_transmitting: " + msg)
@@ -506,33 +472,11 @@ class Th(threading.Thread):
                 print('thread is running')
                 res = self.recv_data(1024)
                 print(res)
-				#res为中心节点传来的命令，命令分两种形式
-				#1.无参数命令 如"init_agents"，此时调用case_init_agents()
-				#2.带参数命令 如"start_detect_live_host ['192.168.0.2','192.168.0.3','192.168.0.4']"，此时调用case_start_detect_live_host()，并将ip数组作为参数传入
-				#后期先在这里处理res再决定调用哪个方法，把方法名和参数分离开来
-                str = res.split(' ',1)
-                print(len(str))
-                command = ""
-                args = []
-                if len(str) == 1:
-					command = str[0]
-					cls.case_to_function(command)("go!")
-                elif len(str) > 1:
-					command = str[0]
-					for item in str:
-						if item == command:
-							continue
-						args.append(item)
-					if command == "start_detect_live_host":
-						if len(args) != 1:
-							print("Error:Incorrecrt arguments")
-						cls.case_to_function(command)(args[0])
-					else:
-						cls.case_to_function(res)("go!")
+                cls.case_to_function(res)("go!")
                 # str = res.split()
                 # for item in str:
                 #     print(item)
-                self.send_data('ok')#每个指令执行完之后都要向中心节点反馈确认信息
+                self.send_data('ok')
             except TypeError as e:
                 print e
         self.con.close()

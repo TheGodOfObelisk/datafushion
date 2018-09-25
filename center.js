@@ -13,7 +13,7 @@ socket.on('message',function(data){
     // socket.send('我很好 你呢？')
     count++
     if(count == 1)
-    	socket.send('start_detect_live_host')//signal
+    	socket.send("start_detect_live_host ['192.168.1.133','192.168.1.134','192.168.1.135']")//signal
     if(count == 2)
     	socket.send('end_detect_live_host')
 
