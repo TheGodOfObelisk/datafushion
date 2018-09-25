@@ -25,6 +25,8 @@ HANDSHAKE_STRING = "HTTP/1.1 101 Switching Protocols\r\n" \
                    "WebSocket-Location: ws://{2}/chat\r\n" \
                    "WebSocket-Protocol:chat\r\n\r\n"
 
+os.environ['NLS_LANG'] = 'SIMPLIFIED CHINESE_CHINA.ZHS16GBK'
+
 #第一个参数，我们的数据库连接信息(dbconfigs)
 #第二个参数，他们的数据库连接信息(dbconfigs_target)
 comnand_arguments = sys.argv
@@ -96,6 +98,57 @@ def prefix2mask(mask_int):
 	tmpmask = [str(int(tmpstr, 2)) for tmpstr in tmpmask]
 	return '.'.join(tmpmask)
 
+def GetHostIdByIp(ip):
+	try:
+		cursor_target.execute("""
+		select ID from {username}.HOST where IP=:tip
+		""".format(username=db_username_target),tip=ip)
+		result = cursor_target.fetchall()
+		if len(result) > 1:
+			print("Error:more than one record in HOST table noticing the same ip")
+		host_id = result[0][0]
+	except:
+		print("Error:fail to fetch id from the HOST table")
+		error_info = sys.exc_info()
+		if len(error_info) > 1:
+			print(str(error_info[0]) + ' ' + str(error_info[1]))
+	return host_id
+
+def GetEntityIdByHostId(host_id):
+	try:
+		cursor_target.execute("""
+		select ID from {username}.ENTITY where HOST_ID=:ho_id
+		""".format(username=db_username_target),ho_id=host_id)
+		result = cursor_target.fetchall()
+		if len(result) > 1:
+			print("Error:more than one record in ENTITY table referencing to the same host")
+		entity_id = result[0][0]
+	except:
+		print("Error:fail to fetch id from the ENTITY table")
+		error_info = sys.exc_info()
+		if len(error_info) > 1:
+			print(str(error_info[0]) + ' ' + str(error_info[1]))
+
+#承担了更新及插入两种操作
+def UpdateTask(host_id, entity_id, Type, period, process):
+	#更新任务表
+	try:
+		cursor_target.execute("""
+		declare t_count number(10);
+		begin
+			select count(*) into t_count from {username}.TASK where EXECUTOR_ID=:e_id and TARGET_ID=:ho_id and TYPE=:tasktype;
+			if t_count=0 then:
+				insert into {username}.TASK(ID,UPDATED,EXECUTOR_ID,TYPE,PERIOD,PROCESS,TARGET_ID) values(:id,'1',:e_id,:tasktype,:taskperiod,:taskprocess,:ho_id);
+			else
+				update {username}.TASK set UPDATED=1,PERIOD=:taskperiod,PROCESS=:taskprocess where EXECUTOR_ID=:e_id and TARGET_ID=:ho_id and TYPE=:tasktype
+		""".format(username=db_username_target),id=(str(uuid.uuid1())),e_id=entity_id,ho_id=host_id,tasktype=Type,taskperiod=period,taskprocess=process)
+	except:
+		print("Error:fail to insert new task into the TASK table")
+		error_info = sys.exc_info()
+		if len(error_info) > 1:
+			print(str(error_info[0]) + ' ' + str(error_info[1]))
+
+
 # run different functions based on different signals
 class switch_case(object):
     def case_to_function(self, case):
@@ -106,6 +159,7 @@ class switch_case(object):
     #plz refer to document "task.odt"
     #correspond to 1
 	#在一大轮探测中，该函数调用且仅调用一次
+	
     def case_init_agents(self, msg):
 		print("case_fun_init_agents: " + msg)
 		#中心节点本身也需要加入表中且isAgent字段为2（不参与决策），只考虑插入我们的数据库
@@ -390,6 +444,8 @@ class switch_case(object):
 	#将本轮执行探测的主机ip地址以数组的形式传入（中心节点应该知道这个信息）
 	#根据主机ip取主机id
 	#再根据主机id取工具id
+	#输入参数 形同"['192.168.0.1','192.168.0.2']"的字符串
+	#封装过后的还没有测
     def case_start_detect_live_host(self, ips):
 		print("case_start_detect_live_host: " + ips)
 		#准备开始探测，将任务插入task表，要先取执行本轮任务的主机的id以及执行探测的工具的id
@@ -397,69 +453,41 @@ class switch_case(object):
 		ips_t = re.findall(reg, ips)
 		for ip in ips_t:
 			#取主机id
-			print("ip: " + ip)
-			try:
-				cursor_target.execute("""
-				select ID from {username}.HOST where IP=:tip
-				""".format(username=db_username_target),tip=ip)
-				result = cursor_target.fetchall()
-				if len(result) > 1:
-					print("Error:more than one record in HOST table noticing the same ip")
-				host_id = result[0][0]
-			except:
-				print("Error:fail to fetch id from the HOST table")
-				error_info = sys.exc_info()
-				if len(error_info) > 1:
-					print(str(error_info[0]) + ' ' + str(error_info[1]))
+			host_id = GetHostIdByIp(ip)
 			#取该主机对应工具id，按照目前的设计，一个主机仅对应一个工具id（第一轮初始的节点外，后面决策出来的节点也要注册相应的工具）
-			try:
-				cursor_target.execute("""
-				select ID from {username}.ENTITY where HOST_ID=:ho_id
-				""".format(username=db_username_target),ho_id=host_id)
-				result = cursor_target.fetchall()
-				if len(result) > 1:
-					print("Error:more than one record in ENTITY table referencing to the same host")
-				entity_id = result[0][0]
-			except:
-				print("Error:fail to fetch id from the ENTITY table")
-				error_info = sys.exc_info()
-				if len(error_info) > 1:
-					print(str(error_info[0]) + ' ' + str(error_info[1]))
-			#插入新任务（往后都是更新任务，仿照模拟程序写在一个UpdateTask()里面）
-			try:
-				cursor_target.execute("""
-				declare t_count number(10);
-				begin
-					select count(*) into t_count from {username}.TASK where EXECUTOR_ID=:e_id and TARGET_ID=:ho_id;
-					if t_count=0 then
-						insert into {username}.TASK(ID,UPDATED,EXECUTOR_ID,TYPE,PERIOD,PROCESS,TARGET_ID) values(:id,'1',:e_id,'嗅探分析','start','正在探测存活主机',:ho_id);
-					else
-						update {username}.TASK set UPDATED=1,TYPE='嗅探分析',PERIOD='start',PROCESS='正在探测存活主机' where EXECUTOR_ID=:e_id and TARGET_ID=:ho_id;
-					end if;
-				end;
-				""".format(username=db_username_target),id=(str(uuid.uuid1())),e_id=entity_id,ho_id=host_id)
-			except:
-				print("Error:fail to insert new task into the TASK table")
-				error_info = sys.exc_info()
-				if len(error_info) > 1:
-					print(str(error_info[0]) + ' ' + str(error_info[1]))
+			entity_id = GetEntityIdByHostId(host_id)
+			#插入新任务（或者更新任务，仿照模拟程序写在一个UpdateTask()里面）
+			#判断重复不仅需要看工具id和主机id，还要看任务类型
+			UpdateTask(host_id, entity_id, "嗅探分析", "start", "正在探测存活主机")
 		conn.commit()
 		conn_target.commit()
 			#the end of for loop
 		#任务表更新完成
 	#end of editing
 	
-	#本条指令在中心节点收到数据融合第一部分的反馈时执行（我们的数据的主机表内容已经基本填完）
-	#由本条指令把主机信息从我们的数据库搬运到别人的数据库，并在更新完主机数据之后更新TASK表
     #correspond to 3
-    def case_start_file_transmitting(self, msg):
-        print("case_start_file_transmitting: " + msg)
+	#开始文件传输，本条指令在中心节点给个体节点发送探测指令时触发
+	#本指令
+    def case_start_file_transmitting(self, ips):
+        print("case_start_file_transmitting: " + ips)
+		#开始文件传输
+		reg = re.compile(r'(?<![\.\d])(?:\d{1,3}\.){3}\d{1,3}(?![\.\d])')
+		ips_t = re.findall(reg, ips)
+		for ip in ips:
+			#取主机id
+			host_id = GetHostIdByIp(ip)
+			#取该主机对应工具id，按照目前的设计，一个主机仅对应一个工具id（第一轮初始的节点外，后面决策出来的节点也要注册相应的工具，可以写在决策完成的指令中）
+			entity_id = GetEntityByHostId(host_id)
+			UpdateTask(host_id, entity_id, "文件传输", "start", "正在回传探测结果")
         time.sleep(1)
 
     #correspond to 4
     def case_end_file_transmitting(self, msg):
         print('case_end_file_transmitting: ' + msg)
 
+	#本条指令在中心节点收到数据融合第一部分的反馈时执行（我们的数据的主机表内容已经基本填完）
+	#由本条指令把主机信息从我们的数据库搬运到别人的数据库，此外还要填上路由器表以及网段路由关系表
+	#最后更新TASK表
     #correspond to 5   one argument indicating the directory
     def case_end_detect_live_host(self, msg):
         print('case_end_detect_live_host: ' + msg)
@@ -493,7 +521,6 @@ class switch_case(object):
     def case_default(self, msg):
         print("case_default: Got an invalid instruction " + msg)
 
-
 class Th(threading.Thread):
     def __init__(self, connection,):
         threading.Thread.__init__(self)
@@ -525,8 +552,14 @@ class Th(threading.Thread):
 						args.append(item)
 					if command == "start_detect_live_host":
 						if len(args) != 1:
-							print("Error:Incorrecrt arguments")
-						cls.case_to_function(command)(args[0])
+							print("Error:Incorrect arguments")
+						else:
+							cls.case_to_function(command)(args[0])
+					elif command == "start_file_transmitting":
+						if len(args) != 1:
+							print("Error:Incorrect arguments")
+						else:
+							cls.case_to_function(command)(args[0])
 					else:
 						cls.case_to_function(res)("go!")
                 # str = res.split()
