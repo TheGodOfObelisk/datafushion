@@ -21,6 +21,16 @@ socket.on('message',function(data){
 		socket.send("end_file_transmitting ['192.168.1.133','192.168.1.134','192.168.1.135']")
 	if(count == 4)
 		socket.send("end_detect_live_host ['192.168.1.133','192.168.1.134','192.168.1.135'] /home/lw/dataf917/datafusion")
+	if(count == 5)
+		socket.send("start_recover_topo ['192.168.1.133','192.168.1.134','192.168.1.135'] /home/lw/dataf917/datafusion")
+	if(count == 6)
+		socket.send("end_recover_topo ['192.168.1.133','192.168.1.134','192.168.1.135']")
+	if(count == 7)
+		socket.send("start_agent_deciding ['192.168.1.133','192.168.1.134','192.168.1.135']")
+	if(count == 8)
+		socket.send("end_agent_deciding ['192.168.1.133','192.168.1.134','192.168.1.135']")
+	if(count == 9)
+		socket.send("start_deploy_agent ['192.168.1.133','192.168.1.134','192.168.1.135']")
 
 })
 socket.on('open',function(){

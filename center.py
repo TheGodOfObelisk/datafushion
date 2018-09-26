@@ -508,6 +508,177 @@ def update_segment_router_rel():
 				except Exception as err:
 					print('Oracle Operating error:',err)
 					return -1
+
+def update_segment_host_rel():
+	"""connect the table segment and host"""
+	try:
+		#Get ip address from table HOST
+		cursor_target.execute('select ID,NET,IP from HOST')
+		host_ips = cursor_target.fetchall()
+		print('The table HOST rows is %d'%cursor_target.rowcount)
+		if cursor_target.rowcount == 0:
+			print('The table HOST is empty!')
+			return -1
+		#Get NET,MASK form table SEGMENT
+		cursor_target.execute('select ID,NET,MASK from SEGMENT')
+		segments = cursor_target.fetchall()
+		print('The table SEGMENT rows is %d'%cursor_target.rowcount)
+		if cursor_target.rowcount == 0:
+			print('The table SEGMENT is empty!')
+			return -1
+	except Exception as err:
+		print('Oracle Operating error:',err)
+		return -1
+	#update the table SEGMENT_HOST_REL
+	id = 0
+	for ip in host_ips:
+		for segment in segments:
+			ip_net = ip[1]
+			if ip[1] == 'Unknown' or ip[1] == None:   #network number not known
+				ip_net = str(IP(ip[2]).make_net(segment[2]))
+				ip_net = ip_net.split('/',1)[0]
+			if ip_net == segment[1]:   #the network number is equal
+				print('Network Number:%s'%ip_net)
+				print('IP:%s'%ip[2])
+				#Judge the segment-host pair exist or not
+				var = {'sid':segment[0],'hid':ip[0]}
+				try:
+					cursor_target.execute('select * from SEGMENT_HOST_REL where SEGMENT_ID=:sid and HOST_ID=:hid',var)
+					#cursor.execute('select * from SEGMENT_HOST_REL where SEGMENT_ID='+segment[0]+' and HOST_ID='+ip[0]+'')
+					cursor_target.fetchone()
+					if (cursor_target.rowcount) == 0:
+						var = {'id':str(uuid.uuid1()),'sid':segment[0],'hid':ip[0],'traffic':random.randint(1,2000)}
+						sql = 'insert into SEGMENT_HOST_REL (ID,UPDATED,SEGMENT_ID,HOST_ID,TRAFFIC)values(:id,1,:sid,:hid,:traffic)'
+						update_oracle_target(sql,var)
+						break
+				except Exception as err:
+					print('Oracle Operating error:',err)
+					return -1
+
+def update_router_router_rel(file_full_path):
+	"""Transfer data from router connection.txt to ROUTER_ROUTER_REL"""
+	items = resolve_file.router_connection_resolve(file_full_path)
+	print(items)
+	if items == -1:
+		return -1
+	for item in items:
+		try:
+			var = {'router1':item['router1']}
+			cursor_target.execute('select ID from ROUTER where ip=:router1',var)
+			router1_id = cursor_target.fetchone()
+			if cursor_target.rowcount == 0:  #No this router ip
+				update_router_ip(item['router1'])
+				var = {'id':str(uuid.uuid1()),'ip':item['router1']}
+				sql = (
+					"insert into ROUTER (ID,UPDATED,OS,IP,NET,PORT,BUSINESSTYPE,MAC,PROCESS,ATTACKED,KEY)"
+					"values(:id,'1','Unknown',:ip,'Unknown',0,'0','Unknown','System.exe','0','0')"
+					)
+				update_oracle_target(sql,var)
+				var = {'router1':item['router1']}
+				cursor_target.execute('select ID from ROUTER where ip=:router1',var)
+				router1_id = cursor_target.fetchone()  #got router1 id
+			var = {'router2':item['router2']}
+			cursor_target.execute('select ID from ROUTER where ip=:router2',var)
+			router2_id = cursor_target.fetchone()
+			if cursor_target.rowcount == 0:    #No this router ip
+				update_router_ip(item['router2'])
+				var = {'id':str(uuid.uuid1()),'ip':item['router2']}
+				sql = (
+					"insert into ROUTER (ID,UPDATED,OS,IP,NET,PORT,BUSINESSTYPE,MAC,PROCESS,ATTACKED,KEY)"
+					"values(:id,'1','Unknown',:ip,'Unknown',0,'0','Unknown','System.exe','0','0')"
+					)
+				update_oracle_target(sql,var)
+				var = {'router2':item['router2']}
+				cursor_target.execute('select ID from ROUTER where ip=:router2',var)
+				router2_id = cursor_target.fetchone()
+			var = {'ROUTER1_ID':router1_id[0],'ROUTER2_ID':router2_id[0]}  #Judge the router connection whether exists
+			cursor_target.execute('select * from ROUTER_ROUTER_REL where ROUTER1_ID=:ROUTER1_ID and ROUTER2_ID=:ROUTER2_ID',var)
+			cursor_target.fetchone()
+			if cursor_target.rowcount == 1:
+				print('The router connection relationship existed')
+				continue
+			var = {'ID':str(uuid.uuid1()),'ROUTER1_ID':router1_id[0],'ROUTER2_ID':router2_id[0],'TRAFFIC':random.randint(1,5000)}
+			sql = (
+				"insert into ROUTER_ROUTER_REL (ID,UPDATED,ROUTER1_ID,ROUTER2_ID,TRAFFIC)"
+				"values(:ID,'1',:ROUTER1_ID,:ROUTER2_ID,:TRAFFIC)"
+				)
+			update_oracle_target(sql,var)
+		except Exception as err:
+			print('Oracle Operating error',err)
+			return -1
+
+gi = pygeoip.GeoIP(r"GeoLiteCity.dat")
+def regGeoStr(ip):
+	"""Get location based on ip addr"""
+	try:
+		rec = gi.record_by_addr(ip)
+		if rec == None:
+			return
+		city = rec['city']
+		country = rec['country_name']
+		location = country  +' ' + city
+		print('location:',location)
+		return location
+	except Exception as e:
+		print(e)
+		return 'Unregistered'
+
+global number
+number = 0
+def update_site(number):
+	"""Updata table SITE based on table SEGMENT"""
+	try:
+		cursor_target.execute('select NET from SEGMENT')
+		nets = cursor_target.fetchall()
+	except Exception as err:
+		print(err)
+		return -1
+	if cursor_target.rowcount <= 0:
+		print('The table SEGMENT is empty')
+		return -1
+	for net in nets:
+		try:
+			var = {'net':net[0]}
+			cursor_target.execute('select * from SITE where NET=:net',var)
+			cursor_target.fetchone()
+			if cursor_target.rowcount > 0:
+				continue
+		except Exception as err:
+			print(err)
+			return -1
+		location = regGeoStr(net[0])
+		if location == None:
+			location = 'Unknown'
+		number = number + 1
+		var = {'id':str(uuid.uuid1()),'name':'site' + str(number),'detail':'This is site-' + str(number),'address':location,'net':net[0]}
+		sql = (
+			"insert into SITE (ID,UPDATED,STATUS,NAME,DETAIL,ADDRESS,NET,TYPE)"
+			"values(:id,'1','online',:name,:detail,:address,:net,2)"
+  			)
+		update_oracle_target(sql,var)
+
+def update_site_segment_rel():
+	try:
+		cursor_target.execute('select ID,NET from SITE')
+		sites = cursor_target.fetchall()
+		if cursor_target.rowcount <= 0:   #table SITE is empty
+			return -1
+		cursor_target.execute('select ID,NET from SEGMENT')
+		segments = cursor_target.fetchall()
+		if cursor_target.rowcount <= 0:   #table SEGMENT is empty
+			return -1
+		for segment in segments:
+			for site in sites:
+				if segment[1] == site[1]:
+					var = {'id':str(uuid.uuid1()),'site_id':site[0],'segment_id':segment[0],'traffic':random.randint(1,5000)}
+					sql = (
+						"insert into SITE_SEGMENT_REL (ID,UPDATED,SITE_ID,SEGMENT_ID,TRAFFIC)"
+						"values(:id,'1',:site_id,:segment_id,:traffic)"
+						)
+					update_oracle_target(sql,var)
+	except Exception as err:
+		print(err)
+		return -1
 		
 """end"""
 		
@@ -974,7 +1145,7 @@ class switch_case(object):
 	#本条指令在上条指令获得反馈之后执行
 	#开始进行拓扑还原
     #correspond to 6
-    def case_start_recover_topo(self, ips):
+    def case_start_recover_topo(self, ips, rootdir):
         print('case_start_recover_topo: ' + ips)
 		#更新任务
         reg = re.compile(r'(?<![\.\d])(?:\d{1,3}\.){3}\d{1,3}(?![\.\d])')
@@ -987,8 +1158,29 @@ class switch_case(object):
 			UpdateTask(host_id, entity_id, "嗅探分析", "start", "正在还原网络拓扑")
         #填充SEGMENT表（暂时不在这里了，写在上面了）
 		#填充SEGMENT_HOST_REL表
-		#......
-		#填充
+        if update_segment_host_rel() == -1:
+			print('Failed to update  SEGMENT_HOST_REL')
+        else:
+			print('Succeeded to update SEGMENT_HOST_REL')
+		#填充ROUTER_ROUTER_REL表
+        ip_dirs = get_result_list(rootdir)
+        for path in ip_dirs:
+			print('处理来自 ' + os.path.basename(path) + ' 的探测结果')
+			file_full_path = path + "/router_connection.txt"
+			if update_router_router_rel(file_full_path) == -1:
+				print('Failed to update ROUTER_ROUTER_REL')
+			else:
+				print('Succeeded to update ROUTER_ROUTER_REL')
+		#填充SITE表
+        if update_site(int(number))== -1:
+			print('Failed to update SITE')
+        else:
+			print('Successed to update SITE')
+		#填充SITE_SEGMENT_REL表
+        if update_site_segment_rel()== -1:
+			print('Failed to update SITE_SEGMENT_REL')
+        else:
+			print('Succeeded to update SITE_SEGMENT_REL')
         conn.commit()
         conn_target.commit()
 
@@ -1006,7 +1198,7 @@ class switch_case(object):
 			UpdateTask(host_id, entity_id, "嗅探分析", "done", "正在还原网络拓扑")
         conn_target.commit()
 
-	#本条指令在执行准备调用数据融合的第二个模块的时候执行
+	#本条指令在执行准备调用数据融合的第二个模块且收到上一个命令的反馈的时候执行
     #correspond to 8
     def case_start_agent_deciding(self, ips):
         print('case_start_agent_deciding: ' + ips)
@@ -1020,17 +1212,39 @@ class switch_case(object):
 			UpdateTask(host_id, entity_id, "嗅探分析", "start", "正在决策选取新的Agent")
         conn_target.commit()
 
+	#本条指令在数据融合的第二个模块执行结束且收到上一个命令的反馈的时候执行
     #correspond to 9
-    def case_end_agent_deciding(self, msg):
-        print('case_end_agent_deciding: ' + msg)
+    def case_end_agent_deciding(self, ips):
+        print('case_end_agent_deciding: ' + ips)
+        reg = re.compile(r'(?<![\.\d])(?:\d{1,3}\.){3}\d{1,3}(?![\.\d])')
+        ips_t = re.findall(reg, ips)
+        for ip in ips_t:
+			#取主机id
+			host_id = GetHostIdByIp(ip)
+			#取该主机对应工具的id
+			entity_id = GetEntityIdByHostId(host_id)
+			UpdateTask(host_id, entity_id, "嗅探分析", "done", "正在决策选取新的Agent")
+        conn_target.commit()
 
+	#本条指令在上一条指令得到反馈之后执行
     #correspond to 10
-    def case_start_deploy_agent(self, msg):
-        print('case_start_deploy_agent: ' + msg)
+    def case_start_deploy_agent(self, ips):
+        print('case_start_deploy_agent: ' + ips)
+        reg = re.compile(r'(?<![\.\d])(?:\d{1,3}\.){3}\d{1,3}(?![\.\d])')
+        ips_t = re.findall(reg, ips)
+        for ip in ips_t:
+			#取主机id
+			host_id = GetHostIdByIp(ip)
+			#取该主机对应工具的id
+			entity_id = GetEntityIdByHostId(host_id)
+			UpdateTask(host_id, entity_id, "渗透扩散", "start", "正在决策选取新的Agent")
+        conn_target.commit()
 
+	#本条指令在上一条指令得到反馈之后执行，本条指令的反馈代表一轮探测+决策已经结束
+	#要为新一轮的子节点做好准备工作，如注入工作表的更新，工具表的更新，工具关系表的更新。。。（仿照初始化的准备工作来做）
     #correspond to 11
-    def case_end_deploy_agent(self, msg):
-        print('case_end_deploy_agent: ' + msg)
+    def case_end_deploy_agent(self, ips):
+        print('case_end_deploy_agent: ' + ips)
 
     # a method that is called by default
     # it is similar to the default segment in switch case structure
@@ -1065,12 +1279,12 @@ class Th(threading.Thread):
 						if item == command:
 							continue
 						args.append(item)
-					if command == "start_detect_live_host" or command == "start_file_transmitting" or command == "end_file_transmitting":
+					if command == "start_detect_live_host" or command == "start_file_transmitting" or command == "end_file_transmitting" or command == "end_recover_topo" or command == "start_agent_deciding" or command == "end_agent_deciding" or command == "start_deploy_agent":
 						if len(args) != 1:
 							print("Error:Incorrect arguments, fail to execute this command")
 						else:
 							cls.case_to_function(command)(args[0])
-					elif command == "end_detect_live_host":
+					elif command == "end_detect_live_host" or command == "start_recover_topo":
 						if len(args) != 2:
 							print("Error:Incorrect arguments, fail to execute this command, please confirm that there in no space in your file path")
 						else:
