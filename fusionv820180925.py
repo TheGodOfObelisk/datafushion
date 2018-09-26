@@ -211,7 +211,6 @@ def update_segment_host_rel():
 					print('Oracle Operating error:',err)
 					return -1
 
-
 def update_protocol(file_full_path):
 	"""Prerequisites: update HOST table.Establish relationship between host and host"""
 	items = resolve_file.protocol_resolve(file_full_path)
@@ -545,7 +544,8 @@ def regGeoStr(ip):
 	"""Get location based on ip addr"""
 	try:
 		rec = gi.record_by_addr(ip)
-		#print(rec)
+		if rec == None:
+			return
 		city = rec['city']
 		country = rec['country_name']
 		location = country  +' ' + city
@@ -556,12 +556,63 @@ def regGeoStr(ip):
 		return 'Unregistered'
 
 #Not yet tested
-def update_site():
-	pass
+global number
+number = 0
+def update_site(number):
+	"""Updata table SITE based on table SEGMENT"""
+	try:
+		cursor1.execute('select NET from SEGMENT')
+		nets = cursor1.fetchall()
+	except Exception as err:
+		print(err)
+		return -1
+	if cursor1.rowcount <= 0:
+		print('The table SEGMENT is empty')
+		return -1
+	for net in nets:
+		try:
+			var = {'net':net[0]}
+			cursor1.execute('select * from SITE where NET=:net',var)
+			cursor1.fetchone()
+			if cursor1.rowcount > 0:
+				continue
+		except Exception as err:
+			print(err)
+			return -1
+		location = regGeoStr(net[0])
+		if location == None:
+			location = 'Unknown'
+		number = number + 1
+		var = {'id':str(uuid.uuid1()),'name':'site' + str(number),'detail':'This is site-' + str(number),'address':location,'net':net[0]}
+		sql = (
+			"insert into SITE (ID,UPDATED,STATUS,NAME,DETAIL,ADDRESS,NET,TYPE)"
+			"values(:id,'1','online',:name,:detail,:address,:net,2)"
+  			)
+		update_oracle1(sql,var)
 
 #Not yet tested
 def update_site_segment_rel():
-	pass
+	try:
+		cursor1.execute('select ID,NET from SITE')
+		sites = cursor1.fetchall()
+		if cursor1.rowcount <= 0:   #table SITE is empty
+			return -1
+		cursor1.execute('select ID,NET from SEGMENT')
+		segments = cursor1.fetchall()
+		if cursor1.rowcount <= 0:   #table SEGMENT is empty
+			return -1
+		for segment in segments:
+			for site in sites:
+				if segment[1] == site[1]:
+					var = {'id':str(uuid.uuid1()),'site_id':site[0],'segment_id':segment[0],'traffic':random.randint(1,5000)}
+					sql = (
+						"insert into SITE_SEGMENT_REL (ID,UPDATED,SITE_ID,SEGMENT_ID,TRAFFIC)"
+						"values(:id,'1',:site_id,:segment_id,:traffic)"
+						)
+					update_oracle1(sql,var)
+	except Exception as err:
+		print(err)
+		return -1
 
 #Function mudulation
 connect_oracle1()
@@ -586,10 +637,10 @@ connect_oracle()
 #	print('Successed to update PROTOCOL')
 
 #Update table SEGMENT_HOST_REL
-if update_segment_host_rel() == -1:
-	print('Failed to update  SEGMENT_HOST_REL')
-else:
-	print('Successed to update SEGMENT_HOST_REL')
+#if update_segment_host_rel() == -1:
+#	print('Failed to update  SEGMENT_HOST_REL')
+#else:
+#	print('Successed to update SEGMENT_HOST_REL')
 
 #Update table PROTOCOL
 #if update_protocol() == -1:
@@ -624,6 +675,17 @@ else:
 #else:
 #	print('Successed to update SEGMENT_ROUTER_REL')
 
+#Update table SITE
+#if update_site(int(number))== -1:
+#	print('Failed to update SITE')
+#else:
+#	print('Successed to update SITE')
+
+#Update table SITE_SEGMENT_REL
+if update_site_segment_rel()== -1:
+	print('Failed to update SITE_SEGMENT_REL')
+else:
+	print('Successed to update SITE_SEGMENT_REL')
 
 disconnect_oracle1()
 disconnect_oracle()

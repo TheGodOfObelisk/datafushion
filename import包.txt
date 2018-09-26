@@ -1,0 +1,6 @@
+1、pip install IPy
+2、pip insatll pygeoip
+      拷贝GeoLiteCity.dat到所写路径
+      即修改路径gi = pygeoip.GeoIP(r"C:\IP\GeoLiteCity.dat")
+3、所传路径的四个文件的函数路径为所放置文件路径【segment.txt,router.txt,router_connection.txt,protocol.txt】
+     即修改路径file_full_path = 'C:\\usr\\test\\segment.txt'

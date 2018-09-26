@@ -7,6 +7,7 @@ var socket = new WebSocket('ws://localhost:3368');
 // }
 
 //var data = {key:'value',hello:'world'};
+//模拟中心节点发命令
 var count = 0
 socket.on('message',function(data){
     console.log("从服务器接收到的信息：",data)
@@ -15,7 +16,11 @@ socket.on('message',function(data){
     if(count == 1)
     	socket.send("start_detect_live_host ['192.168.1.133','192.168.1.134','192.168.1.135']")//signal
     if(count == 2)
-    	socket.send('end_detect_live_host')
+    	socket.send("start_file_transmitting ['192.168.1.133','192.168.1.134','192.168.1.135']")
+	if(count == 3)
+		socket.send("end_file_transmitting ['192.168.1.133','192.168.1.134','192.168.1.135']")
+	if(count == 4)
+		socket.send("end_detect_live_host ['192.168.1.133','192.168.1.134','192.168.1.135'] filepath")
 
 })
 socket.on('open',function(){

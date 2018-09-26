@@ -1,4 +1,7 @@
 # _*_ coding:utf-8 _*_
+from IPy import IP
+import random
+import pygeoip
 import socket
 import threading
 import sys
@@ -12,6 +15,8 @@ import re
 import json
 import uuid
 import datetime
+import os_update
+import resolve_file
 #import unittest
 
 # ====== config ======
@@ -98,6 +103,122 @@ def prefix2mask(mask_int):
 	tmpmask = [str(int(tmpstr, 2)) for tmpstr in tmpmask]
 	return '.'.join(tmpmask)
 
+"""start"""
+def update_oracle(sql,var):    #update the database of ourselvesprint(conn.version())
+	"""update contains:insert,update,delete"""
+	try:
+		cursor.execute(sql,var)
+		conn.commit()
+		if cursor.rowcount != 0:
+			print('Oracle Update Success!')
+	except cx_Oracle.OperationalError as err:
+		print('Oracle Update OperationalError:',err)
+
+def update_oracle_target(sql,var):  #update the FSR database
+	"""update contains:insert,update,delete"""
+	try:
+		cursor_target.execute(sql,var)
+		conn_target.commit()
+		if cursor_target.rowcount != 0:
+			print('Oracle Update Success!')
+	except cx_Oracle.OperationalError as err:
+		print('Oracle Update OperationalError:',err)
+
+def update_os():
+	"""Update Hos of the table Host, only hold one"""
+	try:
+		cursor.execute('select IP,HOS from HOST  where HISDEL=0')
+		oslist = cursor.fetchall()
+		print(cursor.rowcount)
+		if cursor.rowcount==0:
+			print('The table Host is empty!')
+			return -1
+	except cx_Oracle.OperationalError as err:
+		print('Oracle Select OperationalError:',err)
+		return -1
+	for os in oslist:
+		if os[1] == None:
+			continue
+		List = os_update.os_str_transfer(os[1]) #split all string to many little string
+		osString = ''
+		for L in List:
+			# make sure the highest weight
+			if (re.search('Windows Server 2008',L) and re.search('Windows Server 2008',osString)==None):
+				osString = L
+			elif (re.search('Windows 2000',L) and re.search('Windows Server 2008|Windows 2000',osString)==None):
+				osString = L
+			elif (re.search('Windows XP SP3',L) and re.search('Windows Server 2008|Windows 2000|Windows XP SP3',osString)==None):
+				osString = L
+			elif (re.search('Windows 7',L) and re.search('Windows Server 2008|Windows 2000|Windows XP SP3|Windows 7',osString)==None):
+				osString = L
+			elif (re.search('Windows 8',L) and re.search('Windows Server 2008|Windows 2000|Windows XP SP3|Windows 7|Windows 8',osString)==None):
+				osString = L
+			elif (re.search('Windows 10',L) and re.search('Windows Server 2008|Windows 2000|Windows XP SP3|Windows 7|Windows 8|Windows 10',osString)==None):
+				osString = L
+			elif (re.search('Linux',L) and re.search('Windows Server 2008|Windows 2000|Windows XP SP3|Windows 7|Windows 8|Windows 10|Linux',osString)==None):
+				osString = L
+			elif re.search('Windows Server 2008|Windows 2000|Windows XP SP3|Windows 7|Windows 8|Windows 10|Linux',osString)==None:
+				osString = List[0]
+		var = {'os':osString,'ip':os[0]}
+		sql = 'update HOST set HOS=:os where IP=:ip' 
+		update_oracle(sql,var)
+
+def update_host():
+	"""Transfer data from table host to HOST"""
+	try:
+		cursor.execute('select HOS,IP,HMAC,HMASK from HOST where HISDEL=0')
+		hosts = cursor.fetchall()
+		print(cursor.rowcount)
+		if cursor.rowcount==0:
+			print('The table Host is empty!')
+			return -1
+	except cx_Oracle.OperationalError as err:
+		print('Oracle Select OperationalError:',err)
+		return -1
+	for host in hosts:
+		print('IP:',host[1])
+		os = host[0]    #Operating System
+		ip = host[1]    #IP address
+		mac = host[2]   #MAC address
+		if host[3] == None:  #Mask is empty
+			NET = 'Unknown'
+		else:
+			NET = host[3].split('/',1)[0]
+		if os == None:
+			os = 'Unknown'
+		if mac == None:
+			mac = 'Unknown'
+		try:
+			var = {'host_ip':host[1]}
+			cursor_target.execute('select ID,OS,NET,MAC from HOST where IP=:host_ip',var)
+			hosts = cursor_target.fetchall()
+			#update the table HOST
+			print("The rowcount",cursor_target.rowcount)
+			if cursor_target.rowcount == 0:
+				#print("The rowcount",cursor.rowcount)
+				var = {'id':str(uuid.uuid1()),'os':os,'net':NET,'ip':ip,'mac':mac}
+				sql = (
+					"insert into HOST (ID,UPDATED,OS,NET,IP,PORT,BUSINESSTYPE,MAC,PROCESS,ATTACKED,KEY,ENTRY)"
+					"values(:id,'1',:os,:net,:ip,34,'telnet',:mac,'chrome.exe','0','1','1')"
+					) 
+			else:
+				print("The ip exits!")
+				for host in hosts:
+					if host[1] != 'Unknown' and os == 'Unknown':  #No lastest info,Use previous info 
+						os = host[1]
+					if host[2] != 'Unknown' and NET == 'Unknown':
+						NET = host[2]
+					if host[3] != 'Unknown' and mac == 'Unknown':
+						mac = host[3] 
+					var = {'id':'%s'%host[0],'os':os,'net':NET,'mac':mac}
+				sql = "update HOST set OS=:os,NET=:NET,MAC=:mac where IP=:id"
+			update_oracle_target(sql,var)
+		except Exception as err:
+			print('Oracle Error:',err)
+			return -1	
+
+"""end"""
+		
 def GetHostIdByIp(ip):
 	host_id = ""
 	try:
@@ -158,7 +279,7 @@ def UpdateTask(host_id, entity_id, Type, period, process):
 class switch_case(object):
     def case_to_function(self, case):
         fun_name = "case_" + str(case)
-        print("ready to call function " + fun_name)
+        print("ready to call function " + fun_name + "()")
         method = getattr(self, fun_name, self.case_default)
         return method
     #plz refer to document "task.odt"
@@ -478,7 +599,7 @@ class switch_case(object):
 		#这里的缩进可能有问题
         reg = re.compile(r'(?<![\.\d])(?:\d{1,3}\.){3}\d{1,3}(?![\.\d])')
         ips_t = re.findall(reg, ips)
-        for ip in ips:
+        for ip in ips_t:
 			#取主机id
 			host_id = GetHostIdByIp(ip)
 			#取该主机对应工具id，按照目前的设计，一个主机仅对应一个工具id（第一轮初始的节点外，后面决策出来的节点也要注册相应的工具，可以写在决策完成的指令中）
@@ -493,7 +614,7 @@ class switch_case(object):
         print('case_end_file_transmitting: ' + ips)
         reg = re.compile(r'(?<![\.\d])(?:\d{1,3}\.){3}\d{1,3}(?![\.\d])')
         ips_t = re.findall(reg, ips)
-        for ip in ips:
+        for ip in ips_t:
 			#取主机id
 			host_id = GetHostIdByIp(ip)
 			#取该主机对应工具的id
@@ -505,10 +626,21 @@ class switch_case(object):
 	#由本条指令把主机信息从我们的数据库搬运到别人的数据库，此外还要填上路由器表以及网段路由关系表
 	#最后更新TASK表
     #correspond to 5   one argument indicating the directory
-    def case_end_detect_live_host(self, ips):
+    def case_end_detect_live_host(self, ips, path):
         print('case_end_detect_live_host: ' + ips)
-		#填充HOST表
-		#......
+        print('got a file path: ' + path)
+		#填充HOST表，在此之前要更新我们的数据库的HOST表的OS字段（消歧）
+		#Update the filed 'HOS' of table HOST
+        if update_os() == -1:
+			print('Failed to update HOS filed of table HOST')
+        else:
+			print('Successed to update HOS filed of table HOST')
+		#Update table HOST
+        if update_host() == -1:
+			print('Failed to update HOST')
+        else:
+			print('Successed to update HOST')
+		#填充PROTOCOL表
 		#填充ROUTER表
 		#......
 		#填充SEGMENT_ROUTER_REL表
@@ -516,7 +648,7 @@ class switch_case(object):
 		#更新TASK表
         reg = re.compile(r'(?<![\.\d])(?:\d{1,3}\.){3}\d{1,3}(?![\.\d])')
         ips_t = re.findall(reg, ips)
-        for ip in ips:
+        for ip in ips_t:
 			#取主机id
 			host_id = GetHostIdByIp(ip)
 			#取该主机对应工具的id
@@ -533,7 +665,7 @@ class switch_case(object):
 		#更新任务
         reg = re.compile(r'(?<![\.\d])(?:\d{1,3}\.){3}\d{1,3}(?![\.\d])')
         ips_t = re.findall(reg, ips)
-        for ip in ips:
+        for ip in ips_t:
 			#取主机id
 			host_id = GetHostIdByIp(ip)
 			#取该主机对应工具的id
@@ -552,7 +684,7 @@ class switch_case(object):
         print('case_end_recover_topo: ' + ips)
         reg = re.compile(r'(?<![\.\d])(?:\d{1,3}\.){3}\d{1,3}(?![\.\d])')
         ips_t = re.findall(reg, ips)
-        for ip in ips:
+        for ip in ips_t:
 			#取主机id
 			host_id = GetHostIdByIp(ip)
 			#取该主机对应工具的id
@@ -566,7 +698,7 @@ class switch_case(object):
         print('case_start_agent_deciding: ' + ips)
         reg = re.compile(r'(?<![\.\d])(?:\d{1,3}\.){3}\d{1,3}(?![\.\d])')
         ips_t = re.findall(reg, ips)
-        for ip in ips:
+        for ip in ips_t:
 			#取主机id
 			host_id = GetHostIdByIp(ip)
 			#取该主机对应工具的id
@@ -607,8 +739,7 @@ class Th(threading.Thread):
 				#1.无参数命令 如"init_agents"，此时调用case_init_agents()
 				#2.带参数命令 如"start_detect_live_host ['192.168.0.2','192.168.0.3','192.168.0.4']"，此时调用case_start_detect_live_host()，并将ip数组作为参数传入
 				#后期先在这里处理res再决定调用哪个方法，把方法名和参数分离开来
-                str = res.split(' ',1)
-                print(len(str))
+                str = res.split()
                 command = ""
                 args = []
                 if len(str) == 1:
@@ -620,11 +751,16 @@ class Th(threading.Thread):
 						if item == command:
 							continue
 						args.append(item)
-					if command == "start_detect_live_host" or command == "start_file_transmitting":
+					if command == "start_detect_live_host" or command == "start_file_transmitting" or command == "end_file_transmitting":
 						if len(args) != 1:
 							print("Error:Incorrect arguments, fail to execute this command")
 						else:
 							cls.case_to_function(command)(args[0])
+					elif command == "end_detect_live_host":
+						if len(args) != 2:
+							print("Error:Incorrect arguments, fail to execute this command, please confirm that there in no space in your file path")
+						else:
+							cls.case_to_function(command)(args[0], args[1])
 					else:
 						cls.case_to_function(res)("go!")
                 # str = res.split()
