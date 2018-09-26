@@ -80,6 +80,23 @@ except:
     print('Exception:can not get database username')
     sys.exit(1)
 
+def get_result_list(root_dir):
+    try:
+        dirs = os.listdir(root_dir)
+    except:
+        error_info = sys.exc_info()
+        if len(error_info) > 1:
+            print(str(error_info[0]) + ' ' + str(error_info[1]))
+        else:
+            print('Unexpected error:can not get access to the root path of result')
+        return -1
+    ip_dirs = []
+    for dir in dirs:
+        if re.findall('^\d+\.\d+\.\d+\.\d+$', dir):
+            ip_dirs.append(os.path.join(root_dir, dir))
+    return ip_dirs
+
+	
 def get_host_ip():
     """
     查询本机ip地址
@@ -94,8 +111,7 @@ def get_host_ip():
 
     return ip
 
-#将网络前缀转为子网掩码
-def prefix2mask(mask_int):
+def prefix2mask(mask_int):#将网络前缀转为子网掩码
 	bin_arr = ['0' for i in range(32)]
 	for i in range(mask_int):
 		bin_arr[i] = '1'
@@ -110,7 +126,7 @@ def update_oracle(sql,var):    #update the database of ourselvesprint(conn.versi
 		cursor.execute(sql,var)
 		conn.commit()
 		if cursor.rowcount != 0:
-			print('Oracle Update Success!')
+			print('Oracle Update Successfully!')
 	except cx_Oracle.OperationalError as err:
 		print('Oracle Update OperationalError:',err)
 
@@ -120,7 +136,7 @@ def update_oracle_target(sql,var):  #update the FSR database
 		cursor_target.execute(sql,var)
 		conn_target.commit()
 		if cursor_target.rowcount != 0:
-			print('Oracle Update Success!')
+			print('Oracle Update Successfully!')
 	except cx_Oracle.OperationalError as err:
 		print('Oracle Update OperationalError:',err)
 
@@ -217,6 +233,282 @@ def update_host():
 			print('Oracle Error:',err)
 			return -1	
 
+def update_protocol(file_full_path):
+	"""Prerequisites: update HOST table.Establish relationship between host and host"""
+	items = resolve_file.protocol_resolve(file_full_path)
+	if items == -1:
+		print('The protocol file is empty')
+		return -1
+	try:
+		for item in items:
+			pro = item['pro']   # protocol
+			traffic = item['traffic']
+			if len(pro)>10:
+				pro = pro[0:10]
+			var = {'src':item['src']}
+			cursor_target.execute('select ID from HOST where IP=:src',var)  #Judge the src address whether it exists
+			host1_id = cursor_target.fetchone()
+			if cursor_target.rowcount == 0:
+				continue
+			var = {'dst':item['dst']}
+			cursor_target.execute('select ID from HOST where IP=:dst',var)   #Judge the dst address whether it exists
+			host2_id = cursor_target.fetchone()
+			if cursor_target.rowcount == 0:
+				continue
+			var = {'host1_id':host1_id[0],'host2_id':host2_id[0]}
+			cursor_target.execute('select * from PROTOCOL where HOST1_ID=:host1_id and HOST2_ID=:host2_id',var)  #Judge the ip pair whether it exists
+			protocol = cursor_target.fetchone()
+			if cursor_target.rowcount == 1:    #the ip pairs has existed ,update the PROTOCOL table
+				if protocol[2]!='Unknown' and pro == 'Unknown':
+					pro = protocol[2]
+				if protocol[5] != 0 and traffic == 0:
+					traffic = int(protocol[5])
+				var = {'id':protocol[0],'type':pro,'traffic':traffic}
+				sql = 'update PROTOCOL set TYPE=:type,TRAFFIC=:traffic where ID=:id'
+			else:
+				var = {'id':str(uuid.uuid1()),'type':pro,'host1_id':host1_id[0],'host2_id':host2_id[0],'traffic':traffic}
+				sql = "insert into PROTOCOL (ID,UPDATED,TYPE,HOST1_ID,HOST2_ID,TRAFFIC)values(:id,'1',:type,:host1_id,:host2_id,:traffic)"
+			update_oracle_target(sql,var)
+	except Exception as err:
+		print(err)
+
+def update_router_ips(file_full_path):#仅操作我们的数据库
+	"""conserve router interface info to table ROUTER and ROUTER_INTERFACE"""
+	items = resolve_file.router_resolve(file_full_path)
+	if items == -1:
+		return -1
+	for item in items:
+		for i in item['router']:    #Traverse router data ,if found router unique ip,conserve other data;if not conserve unique ip and other ips
+			Router = ''
+			try:
+				var = {'ip':i}
+				cursor.execute('select ROUTER_ID from ROUTER_INTERFACE where ip=:ip',var)
+				Router_id = cursor.fetchone()
+				if cursor.rowcount == 0:
+					continue
+				else:
+					Router = Router_id[0]
+					break;
+			except Exception as err:
+				print('Oracle Operating error:',err)
+				return -1
+		if Router != '':   #had get unique ip id
+			for i in item['router']:
+				try:
+					var = {'ip':i}
+					cursor.execute('select ROUTER_ID from ROUTER_INTERFACE where ip=:ip',var)
+					cursor.fetchone()
+					if cursor.rowcount == 0:
+						var = {'id':str(uuid.uuid1()),'router_id':Router,'ip':i}
+						sql = 'insert into ROUTER_INTERFACE (ID,ROUTER_ID,IP)values(:id,:router_id,:ip)'
+						update_oracle(sql,var)
+				except Exception as err:
+					print('Oracle Operating error:',err)
+					return -1
+		else:           #Not got unique ip id ,need to insert default unique ip(usually the first one)
+			for i in item['router']:
+				var = {'ip':i}
+				cursor.execute('select * from ROUTER_INTERFACE where ip=:ip',var)
+				cursor.fetchone()
+				if cursor.rowcount == 0:
+					if i == item['router'][0]: #first ip is router unique ip
+						var = {'id':str(uuid.uuid1()),'ip':i}
+						sql = 'insert into ROUTER (ID,IP)values(:id,:ip)'
+						update_oracle(sql,var)
+					var = {'ip':item['router'][0]}
+					cursor.execute('select ID from ROUTER where IP=:ip',var)
+					router_id = cursor.fetchone()
+					var = {'id':str(uuid.uuid1()),'router_id':router_id[0],'ip':i}
+					sql = 'insert into ROUTER_INTERFACE (ID,ROUTER_ID,IP)values(:id,:router_id,:ip)'
+					update_oracle(sql,var)
+
+def update_router_ip(ip):#仅操作我们的数据库
+	"""Insert data(not in router.txt) to ROUTER and ROUTER_INTERFACE"""
+	try:
+		var = {'id':str(uuid.uuid1()),'IP':ip}
+		sql = 'insert into ROUTER (ID,IP)values(:id,:IP)'
+		update_oracle(sql,var)
+		var = {'IP':ip}
+		cursor.execute('select ID from ROUTER where IP=:IP',var)
+		router_id = cursor.fetchone()
+		var = {'ID':str(uuid.uuid1()),'ROUTER_ID':router_id[0],'IP':ip}
+		sql = 'insert into ROUTER_INTERFACE (ID,ROUTER_ID,IP)values(:ID,:ROUTER_ID,:IP)'
+		update_oracle(sql,var)
+		return router_id[0]
+	except Exception as err:
+		print('Oracle Operating error:',err)
+		return -1
+	
+def update_router(file_full_path):
+	"""Transfer data to ROUTER ,from HOST or router.txt"""
+	status = update_router_ips(file_full_path)
+	if status == -1:
+		print('Failed to update routers')
+	#data from HOST,find device type is "router"
+	try:
+		cursor.execute('select IP,HSERVICENUM,HOS,HOPENPORTNUM,HDEVICE,HMAC,HMASK from HOST where HISDEL=0')
+		hosts = cursor.fetchall()
+	except Exception as err:
+		print('Oracle Operating error',err)
+		return -1
+	if cursor.rowcount == 0:
+		print('Our HOST table is empty')
+		return
+	else:
+		for host in hosts:   #Traserve HOST table
+			if host[4] == 'router':
+				ip = host[0]
+				servicenum = str(host[1])
+				os = host[2]
+				portnum = host[3]
+				mac = host[5]
+				net = host[6].split('/')[0]
+				if os == None:
+					os = 'Unknown'
+				if mac == None:
+					mac = 'Unknown'
+				if net == None:
+					net = 'Unknown'
+				try:
+					var = {'ip':ip}
+					cursor.execute('select ROUTER_ID from ROUTER_INTERFACE where IP=:ip',var) #Judge the router whether was recorded
+					r = cursor.fetchone()
+					if cursor.rowcount == 0:
+						if update_router_ip(ip) == -1:    #Record the ip and get unique ip id
+							print('Failed to update router ip')
+						else:
+							Router = update_router_ip(ip) 
+					else:
+						Router = r[0]  #get router unique id
+					var = {'id':Router}
+					cursor.execute('select IP from ROUTER where ID=:id',var)  #Get the unique ip
+					IP = cursor.fetchone()
+					var = {'ip':IP[0]}
+					cursor_target.execute('select ID,OS,NET,MAC from ROUTER where IP=:ip',var)   #Judge the router whether exists
+					router = cursor_target.fetchone()
+				except Exception as err:
+					print('Oracle Operating error',err)
+					return -1
+				if cursor_target.rowcount == 1:
+					if router[1] != 'Unknown' and os == 'Unknown':  #No lastest info,Use previous info 
+						os = router[1]
+					if router[2] != 'Unknown' and net == 'Unknown':
+						net = router[2]
+					if router[3] != 'Unknown' and mac == 'Unknown':
+						mac = router[3] 
+					var = {'id':router[0],'os':os,'net':net,'port':portnum,'business':servicenum,'mac':mac}
+					sql = 'update ROUTER set OS=:os,NET=:net,PORT=:port,BUSINESSTYPE=:business,MAC=:mac where ID=:id'
+				else:
+					var = {'id':str(uuid.uuid1()),'os':os,'ip':IP[0],'net':net,'port':portnum,'business':servicenum,'mac':mac}
+					sql = (
+						"insert into ROUTER (ID,UPDATED,OS,IP,NET,PORT,BUSINESSTYPE,MAC,PROCESS,ATTACKED,KEY)"
+						"values(:id,'1',:os,:ip,:net,:port,:business,:mac,'chrome.exe','0','0')"
+						)
+				update_oracle_target(sql,var)
+
+def update_mask(mask_int):
+	"""Transfer number to mask"""
+	bin_arr = ['0' for i in range(32)]
+	for i in range(mask_int):
+		bin_arr[i] = '1'
+	tmpmask = [''.join(bin_arr[i * 8:i * 8 + 8]) for i in range(4)]
+	tmpmask = [str(int(tmpstr,2)) for tmpstr in tmpmask]
+	return '.'.join(tmpmask)
+
+def update_segment(file_full_path):
+	"""Transfer data to SEGMENT ,from HOST or segment.txt"""
+	items = resolve_file.segment_resolve(file_full_path)
+	#data from segment.txt
+	if items != -1:
+		for item in items:
+			try:
+				var = {'net':item['net'],'mask':item['mask']}
+				cursor_target.execute('select * from SEGMENT where NET=:net and MASK=:mask',var)
+				cursor_target.fetchone()
+				if cursor_target.rowcount == 1:
+					continue
+				else:
+					print('insert',item['net'])
+					var = {'id':str(uuid.uuid1()),'net':item['net'],'mask':item['mask']}
+					sql = 'insert into SEGMENT (ID,UPDATED,NET,MASK)values(:id,1,:net,:mask)'
+					update_oracle_target(sql,var)
+			except Exception as err:
+				print('Oracle Operating error:',err)
+				return -1
+			
+	#data from HOST
+	try:
+		cursor.execute('select HMASK from HOST where HISDEL=0')
+		nets = cursor.fetchall()
+		print('select',cursor.rowcount)
+		if cursor.rowcount == 0:
+			return -1
+	except Exception as err:
+		print('Oracle Operating error:',err)
+	for net in nets:
+		if net[0] == None:
+			continue
+		NET = net[0].split('/')[0]
+		prefix = net[0].split('/')[1]
+		MASK = update_mask(int(prefix))
+		try:
+			var = {'Net':NET,'Mask':MASK}
+			cursor_target.execute('select * from SEGMENT where NET=:Net and MASK=:Mask',var)  #Judging the network number whether exists
+			cursor_target.fetchone()
+			if cursor_target.rowcount ==1:
+				continue
+			else:
+				var = {'id':str(uuid.uuid1()),'Net':NET,'Mask':MASK}
+				sql = 'insert into SEGMENT (ID,UPDATED,NET,MASK)values(:id,1,:Net,:Mask)'
+				update_oracle_target(sql,var)
+		except Exception as err:
+			print('Oracle Operating error:',err)
+			return -1
+		
+def update_segment_router_rel():
+	"""estiblish the table SEGMENT and ROUTER"""
+	try:
+		#Get ID,NET from table ROUTER
+		cursor_target.execute('select ID,NET,IP from ROUTER')
+		routers = cursor_target.fetchall()
+		#print('The table ROUTER rows is %d'%cursor_target.rowcount)
+		if cursor_target.rowcount == 0:
+			print('The table ROUTER is empty!')
+			return -1
+		#Get ID,NET form table SEGMENT
+		cursor_target.execute('select ID,NET,MASK from SEGMENT')
+		segments = cursor_target.fetchall()
+		#print('The table SEGMENT rows is %d'%cursor_target.rowcount)
+		if cursor_target.rowcount == 0:
+			print('The table SEGMENT is empty!')
+			return -1
+	except Exception as err:
+		print('Oracle Operating error:',err)
+		return -1
+	#update the table SEGMENT_ROUTER_REL
+	for router in routers:
+		for segment in segments:
+			router_net = router[1]
+			if router[1] == 'Unknown' or router[1] == None:
+				router_net = str(IP(router[2]).make_net(segment[2]))
+				router_net = router_net.split('/',1)[0]
+			if router_net == segment[1]:   #the network number is equal
+				#print('Network Number:%s'%router_net)
+				#print('IP:%s'%router[2])
+				#Judge the segment-router pair exist or not
+				var = {'sid':segment[0],'rid':router[0]}
+				try:
+					cursor_target.execute('select * from SEGMENT_ROUTER_REL where SEGMENT_ID=:sid and ROUTER_ID=:rid',var)
+					cursor_target.fetchone()
+					if (cursor_target.rowcount) == 0:
+						var = {'id':str(uuid.uuid1()),'sid':segment[0],'rid':router[0],'traffic':random.randint(1,5000)}
+						sql = 'insert into SEGMENT_ROUTER_REL (ID,UPDATED,SEGMENT_ID,ROUTER_ID,TRAFFIC)values(:id,1,:sid,:rid,:traffic)'
+						update_oracle_target(sql,var)
+						break
+				except Exception as err:
+					print('Oracle Operating error:',err)
+					return -1
+		
 """end"""
 		
 def GetHostIdByIp(ip):
@@ -626,9 +918,9 @@ class switch_case(object):
 	#由本条指令把主机信息从我们的数据库搬运到别人的数据库，此外还要填上路由器表以及网段路由关系表
 	#最后更新TASK表
     #correspond to 5   one argument indicating the directory
-    def case_end_detect_live_host(self, ips, path):
+    def case_end_detect_live_host(self, ips, rootdir):
         print('case_end_detect_live_host: ' + ips)
-        print('got a file path: ' + path)
+        print('got a file path: ' + rootdir)
 		#填充HOST表，在此之前要更新我们的数据库的HOST表的OS字段（消歧）
 		#Update the filed 'HOS' of table HOST
         if update_os() == -1:
@@ -639,12 +931,34 @@ class switch_case(object):
         if update_host() == -1:
 			print('Failed to update HOST')
         else:
-			print('Successed to update HOST')
+			print('Succeeded to update HOST')
 		#填充PROTOCOL表
-		#填充ROUTER表
-		#......
+		#待处理文件放在当前目录下以ip地址命名的所有文件夹中
+        ip_dirs = get_result_list(rootdir)
+        for path in ip_dirs:
+			print('处理来自 ' + os.path.basename(path) + ' 的探测结果')
+			file_full_path = path + "/protocol.txt"
+			if update_protocol(file_full_path) == -1:
+				print('Failed to update PROTOCOL')
+			else:
+				print('Succeeded to update PROTOCOL')
+			#填充ROUTER表
+			file_full_path = path + "/router.txt"
+			if update_router(file_full_path) == -1:
+				print('Failed to update ROUTER')
+			else:
+				print('Succeeded to update ROUTER')
+			#更新SEGMENT表
+			file_full_path = path + "/segment.txt"
+			if update_segment(file_full_path) == -1:
+				print('Failed to update SEGMENT')
+			else:
+				print('Succeeded to update SEGMENT')
 		#填充SEGMENT_ROUTER_REL表
-		#......
+        if update_segment_router_rel() == -1:
+			print('Failed to update SEGMENT_ROUTER_REL')
+        else:
+			print('Succeeded to update SEGMENT_ROUTER_REL')
 		#更新TASK表
         reg = re.compile(r'(?<![\.\d])(?:\d{1,3}\.){3}\d{1,3}(?![\.\d])')
         ips_t = re.findall(reg, ips)
@@ -671,10 +985,10 @@ class switch_case(object):
 			#取该主机对应工具的id
 			entity_id = GetEntityIdByHostId(host_id)
 			UpdateTask(host_id, entity_id, "嗅探分析", "start", "正在还原网络拓扑")
-        #填充SEGMENT表
-		#......
+        #填充SEGMENT表（暂时不在这里了，写在上面了）
 		#填充SEGMENT_HOST_REL表
 		#......
+		#填充
         conn.commit()
         conn_target.commit()
 

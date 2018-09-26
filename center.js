@@ -20,7 +20,7 @@ socket.on('message',function(data){
 	if(count == 3)
 		socket.send("end_file_transmitting ['192.168.1.133','192.168.1.134','192.168.1.135']")
 	if(count == 4)
-		socket.send("end_detect_live_host ['192.168.1.133','192.168.1.134','192.168.1.135'] filepath")
+		socket.send("end_detect_live_host ['192.168.1.133','192.168.1.134','192.168.1.135'] /home/lw/dataf917/datafusion")
 
 })
 socket.on('open',function(){

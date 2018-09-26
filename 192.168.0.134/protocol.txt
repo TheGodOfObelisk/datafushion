@@ -1,0 +1,1005 @@
+src:192.168.1.117
+dst:1.192.193.147
+pro:http
+This IP appears only once!
+
+src:192.168.1.117
+dst:220.181.156.49
+pro:domain
+This IP appears only once!
+
+src:192.168.1.117
+dst:180.97.63.154
+pro:domain
+This IP appears only once!
+
+src:192.168.1.117
+dst:180.153.197.12
+pro:http
+This IP appears only once!
+
+src:192.168.1.117
+dst:220.181.157.125
+pro:http
+This IP appears only once!
+
+src:192.168.1.113
+dst:224.0.0.2
+pro:Unknown
+The Network Traffic:0 bytes/s
+
+src:192.168.1.117
+dst:203.208.40.126
+pro:https
+The Network Traffic:49 bytes/s
+
+src:192.168.1.117
+dst:1.192.192.237
+pro:http
+The Network Traffic:111 bytes/s
+
+src:192.168.1.117
+dst:192.168.1.113
+pro:Unknown
+The Network Traffic:0 bytes/s
+
+src:192.168.1.113
+dst:255.255.255.255
+pro:Unknown
+This IP appears only once!
+
+src:192.168.1.113
+dst:224.0.0.2
+pro:IGMP
+The Network Traffic:0 bytes/s
+
+src:192.168.1.29
+dst:192.168.1.255
+pro:netbios-ns
+The Network Traffic:5 bytes/s
+
+src:192.168.1.113
+dst:255.255.255.255
+pro:bootps
+The Network Traffic:0 bytes/s
+
+src:192.168.1.113
+dst:192.168.1.255
+pro:netbios-dgm
+The Network Traffic:2 bytes/s
+
+src:192.168.1.113
+dst:224.0.0.22
+pro:Unknown
+The Network Traffic:300 bytes/s
+
+src:192.168.1.113
+dst:224.0.0.22
+pro:IGMP
+The Network Traffic:480 bytes/s
+
+src:192.168.1.113
+dst:192.168.1.255
+pro:netbios-ns
+The Network Traffic:17 bytes/s
+
+src:192.168.1.1
+dst:224.0.0.1
+pro:Unknown
+The Network Traffic:0 bytes/s
+
+src:192.168.1.117
+dst:182.150.11.107
+pro:https
+The Network Traffic:1662 bytes/s
+
+src:192.168.1.117
+dst:119.84.93.129
+pro:https
+The Network Traffic:36 bytes/s
+
+src:192.168.1.117
+dst:180.149.131.245
+pro:https
+The Network Traffic:443 bytes/s
+
+src:192.168.1.86
+dst:224.0.0.2
+pro:IGMP
+The Network Traffic:40 bytes/s
+
+src:192.168.1.102
+dst:192.168.1.255
+pro:netbios-dgm
+The Network Traffic:2 bytes/s
+
+src:192.168.1.102
+dst:192.168.1.255
+pro:netbios-ns
+The Network Traffic:9 bytes/s
+
+src:192.168.1.102
+dst:224.0.0.2
+pro:Unknown
+The Network Traffic:0 bytes/s
+
+src:192.168.1.102
+dst:224.0.0.2
+pro:IGMP
+The Network Traffic:0 bytes/s
+
+src:192.168.1.117
+dst:104.120.205.127
+pro:https
+The Network Traffic:26 bytes/s
+
+src:192.168.1.85
+dst:192.168.1.255
+pro:netbios-dgm
+The Network Traffic:0 bytes/s
+
+src:192.168.1.117
+dst:61.136.101.201
+pro:https
+The Network Traffic:255 bytes/s
+
+src:192.168.1.117
+dst:104.19.197.151
+pro:https
+The Network Traffic:10 bytes/s
+
+src:192.168.1.117
+dst:119.84.133.244
+pro:https
+The Network Traffic:34 bytes/s
+
+src:192.168.1.117
+dst:150.138.151.19
+pro:https
+The Network Traffic:10 bytes/s
+
+src:192.168.1.117
+dst:118.112.22.167
+pro:http
+The Network Traffic:23 bytes/s
+
+src:192.168.1.117
+dst:180.97.63.237
+pro:https
+The Network Traffic:1369 bytes/s
+
+src:192.168.1.117
+dst:58.218.198.130
+pro:https
+The Network Traffic:977 bytes/s
+
+src:192.168.1.117
+dst:1.192.193.108
+pro:domain
+This IP appears only once!
+
+src:192.168.1.52
+dst:224.0.0.2
+pro:Unknown
+The Network Traffic:0 bytes/s
+
+src:192.168.1.78
+dst:224.0.0.2
+pro:IGMP
+The Network Traffic:0 bytes/s
+
+src:192.168.1.78
+dst:224.0.0.2
+pro:Unknown
+The Network Traffic:0 bytes/s
+
+src:192.168.1.70
+dst:224.0.0.251
+pro:Unknown
+The Network Traffic:0 bytes/s
+
+src:192.168.1.70
+dst:224.0.0.2
+pro:Unknown
+The Network Traffic:0 bytes/s
+
+src:192.168.1.76
+dst:224.0.0.2
+pro:IGMP
+The Network Traffic:0 bytes/s
+
+src:192.168.1.29
+dst:224.0.0.252
+pro:IGMP
+The Network Traffic:0 bytes/s
+
+src:192.168.1.117
+dst:224.0.0.251
+pro:Unknown
+The Network Traffic:0 bytes/s
+
+src:192.168.1.117
+dst:23.207.27.44
+pro:http
+The Network Traffic:126 bytes/s
+
+src:192.168.1.117
+dst:180.163.235.243
+pro:http
+This IP appears only once!
+
+src:192.168.1.117
+dst:59.63.72.13
+pro:http
+This IP appears only once!
+
+src:192.168.1.117
+dst:118.123.210.32
+pro:https
+The Network Traffic:90 bytes/s
+
+src:192.168.1.117
+dst:183.3.226.92
+pro:https
+The Network Traffic:14 bytes/s
+
+src:192.168.1.117
+dst:218.88.212.31
+pro:https
+The Network Traffic:48 bytes/s
+
+src:192.168.1.117
+dst:218.88.212.49
+pro:https
+The Network Traffic:12 bytes/s
+
+src:192.168.1.117
+dst:180.149.133.167
+pro:https
+The Network Traffic:230 bytes/s
+
+src:192.168.1.117
+dst:180.149.133.167
+pro:http
+The Network Traffic:17 bytes/s
+
+src:192.168.1.117
+dst:123.183.221.14
+pro:http
+The Network Traffic:1093 bytes/s
+
+src:192.168.1.117
+dst:106.120.165.217
+pro:http
+The Network Traffic:1026 bytes/s
+
+src:192.168.1.171
+dst:224.0.0.251
+pro:IGMP
+The Network Traffic:0 bytes/s
+
+src:192.168.1.92
+dst:192.168.1.117
+pro:ms-do
+The Network Traffic:22 bytes/s
+
+src:192.168.1.117
+dst:182.150.10.47
+pro:http
+The Network Traffic:291 bytes/s
+
+src:192.168.1.117
+dst:180.163.237.138
+pro:http
+The Network Traffic:1388 bytes/s
+
+src:192.168.1.117
+dst:180.153.199.194
+pro:http
+This IP appears only once!
+
+src:192.168.1.117
+dst:110.185.121.222
+pro:http
+The Network Traffic:13 bytes/s
+
+src:192.168.1.117
+dst:118.112.13.20
+pro:https
+The Network Traffic:17 bytes/s
+
+src:192.168.1.117
+dst:13.75.122.216
+pro:https
+This IP appears only once!
+
+src:192.168.1.117
+dst:140.143.52.226
+pro:https
+The Network Traffic:23 bytes/s
+
+src:192.168.1.85
+dst:255.255.255.255
+pro:Unknown
+The Network Traffic:64 bytes/s
+
+src:192.168.1.117
+dst:203.208.40.94
+pro:https
+The Network Traffic:25 bytes/s
+
+src:192.168.1.117
+dst:104.19.198.151
+pro:https
+The Network Traffic:13 bytes/s
+
+src:192.168.1.117
+dst:104.25.219.21
+pro:https
+The Network Traffic:148 bytes/s
+
+src:192.168.1.117
+dst:104.25.219.21
+pro:http
+The Network Traffic:2 bytes/s
+
+src:192.168.1.117
+dst:52.229.207.60
+pro:https
+The Network Traffic:135 bytes/s
+
+src:192.168.1.179
+dst:192.168.1.255
+pro:netbios-ns
+The Network Traffic:414 bytes/s
+
+src:192.168.1.29
+dst:239.255.255.250
+pro:Unknown
+The Network Traffic:0 bytes/s
+
+src:192.168.1.117
+dst:224.0.0.252
+pro:Unknown
+The Network Traffic:0 bytes/s
+
+src:192.168.1.117
+dst:123.103.57.60
+pro:http
+The Network Traffic:3 bytes/s
+
+src:192.168.1.117
+dst:23.209.36.144
+pro:http
+The Network Traffic:6 bytes/s
+
+src:192.168.1.117
+dst:123.103.57.109
+pro:http
+The Network Traffic:5 bytes/s
+
+src:192.168.1.117
+dst:218.6.154.6
+pro:http
+The Network Traffic:7 bytes/s
+
+src:192.168.1.117
+dst:123.103.57.106
+pro:http
+The Network Traffic:34 bytes/s
+
+src:192.168.1.117
+dst:125.74.13.17
+pro:http
+The Network Traffic:19 bytes/s
+
+src:192.168.1.117
+dst:125.74.13.15
+pro:https
+The Network Traffic:126 bytes/s
+
+src:192.168.1.117
+dst:125.74.13.19
+pro:https
+The Network Traffic:15 bytes/s
+
+src:192.168.1.117
+dst:125.74.13.15
+pro:http
+The Network Traffic:287 bytes/s
+
+src:192.168.1.117
+dst:125.74.13.29
+pro:https
+The Network Traffic:160 bytes/s
+
+src:192.168.1.117
+dst:123.103.57.123
+pro:http
+The Network Traffic:60 bytes/s
+
+src:192.168.1.212
+dst:192.168.1.117
+pro:ms-do
+The Network Traffic:0 bytes/s
+
+src:192.168.1.117
+dst:52.230.3.194
+pro:https
+The Network Traffic:0 bytes/s
+
+src:192.168.1.44
+dst:192.168.1.255
+pro:netbios-dgm
+The Network Traffic:0 bytes/s
+
+src:192.168.1.117
+dst:183.36.108.166
+pro:http
+The Network Traffic:30 bytes/s
+
+src:192.168.1.117
+dst:118.112.22.184
+pro:http
+The Network Traffic:122 bytes/s
+
+src:192.168.1.85
+dst:192.168.1.255
+pro:netbios-ns
+The Network Traffic:7 bytes/s
+
+src:192.168.1.85
+dst:224.0.0.22
+pro:Unknown
+The Network Traffic:166 bytes/s
+
+src:192.168.1.85
+dst:224.0.0.22
+pro:IGMP
+The Network Traffic:120 bytes/s
+
+src:192.168.1.1
+dst:255.255.255.255
+pro:bootps
+The Network Traffic:0 bytes/s
+
+src:192.168.1.86
+dst:192.168.1.117
+pro:Unknown
+The Network Traffic:624 bytes/s
+
+src:192.168.1.117
+dst:14.215.152.237
+pro:Unknown
+This IP appears only once!
+
+src:192.168.1.117
+dst:113.96.230.252
+pro:Unknown
+The Network Traffic:11 bytes/s
+
+src:192.168.1.86
+dst:224.0.0.2
+pro:Unknown
+The Network Traffic:0 bytes/s
+
+src:192.168.1.157
+dst:224.0.0.251
+pro:Unknown
+The Network Traffic:0 bytes/s
+
+src:192.168.1.117
+dst:239.255.255.250
+pro:IGMP
+The Network Traffic:0 bytes/s
+
+src:192.168.1.117
+dst:224.0.0.252
+pro:IGMP
+The Network Traffic:0 bytes/s
+
+src:192.168.1.117
+dst:224.0.0.251
+pro:IGMP
+The Network Traffic:0 bytes/s
+
+src:192.168.1.208
+dst:192.168.1.255
+pro:netbios-dgm
+The Network Traffic:0 bytes/s
+
+src:192.168.1.117
+dst:180.163.25.38
+pro:https
+The Network Traffic:16 bytes/s
+
+src:192.168.1.117
+dst:182.140.174.218
+pro:http
+The Network Traffic:19 bytes/s
+
+src:192.168.1.52
+dst:192.168.1.255
+pro:netbios-dgm
+The Network Traffic:0 bytes/s
+
+src:192.168.1.50
+dst:192.168.1.255
+pro:netbios-dgm
+The Network Traffic:0 bytes/s
+
+src:192.168.1.29
+dst:192.168.1.255
+pro:netbios-dgm
+The Network Traffic:0 bytes/s
+
+src:192.168.1.213
+dst:192.168.1.255
+pro:netbios-ns
+The Network Traffic:16 bytes/s
+
+src:192.168.1.213
+dst:224.0.0.22
+pro:Unknown
+The Network Traffic:97 bytes/s
+
+src:192.168.1.213
+dst:224.0.0.22
+pro:IGMP
+The Network Traffic:83 bytes/s
+
+src:192.168.1.6
+dst:192.168.1.255
+pro:netbios-ns
+The Network Traffic:0 bytes/s
+
+src:192.168.1.78
+dst:192.168.1.255
+pro:netbios-ns
+The Network Traffic:6 bytes/s
+
+src:192.168.1.78
+dst:192.168.1.255
+pro:netbios-dgm
+The Network Traffic:0 bytes/s
+
+src:192.168.1.117
+dst:125.65.43.82
+pro:https
+The Network Traffic:33 bytes/s
+
+src:192.168.1.117
+dst:118.112.13.18
+pro:https
+The Network Traffic:17 bytes/s
+
+src:192.168.1.241
+dst:192.168.1.255
+pro:netbios-dgm
+The Network Traffic:2 bytes/s
+
+src:192.168.1.171
+dst:224.0.0.251
+pro:Unknown
+The Network Traffic:0 bytes/s
+
+src:192.168.1.29
+dst:239.255.255.250
+pro:IGMP
+The Network Traffic:0 bytes/s
+
+src:192.168.1.117
+dst:121.49.110.1
+pro:netbios-ns
+The Network Traffic:46 bytes/s
+
+src:121.49.110.1
+dst:192.168.1.117
+pro:ICMP
+This IP appears only once!
+
+src:192.168.1.1
+dst:192.168.1.117
+pro:ICMP
+This IP appears only once!
+
+src:192.168.1.117
+dst:118.123.210.48
+pro:https
+The Network Traffic:17 bytes/s
+
+src:192.168.1.117
+dst:218.88.212.48
+pro:https
+The Network Traffic:31 bytes/s
+
+src:192.168.1.117
+dst:220.181.164.104
+pro:https
+The Network Traffic:289 bytes/s
+
+src:192.168.1.117
+dst:220.181.164.104
+pro:http
+The Network Traffic:25 bytes/s
+
+src:192.168.1.117
+dst:180.97.33.107
+pro:telnet
+The Network Traffic:22 bytes/s
+
+src:192.168.1.117
+dst:59.36.120.123
+pro:Unknown
+The Network Traffic:0 bytes/s
+
+src:192.168.1.117
+dst:171.8.167.44
+pro:http
+The Network Traffic:1 bytes/s
+
+src:180.163.238.162
+dst:192.168.1.117
+pro:http
+The Network Traffic:0 bytes/s
+
+src:192.168.1.241
+dst:224.0.0.2
+pro:IGMP
+The Network Traffic:1 bytes/s
+
+src:192.168.1.117
+dst:180.97.33.108
+pro:telnet
+The Network Traffic:22 bytes/s
+
+src:192.168.1.117
+dst:59.36.120.122
+pro:Unknown
+The Network Traffic:0 bytes/s
+
+src:192.168.1.76
+dst:192.168.1.255
+pro:netbios-ns
+The Network Traffic:0 bytes/s
+
+src:192.168.1.157
+dst:224.0.0.251
+pro:IGMP
+The Network Traffic:0 bytes/s
+
+src:192.168.1.52
+dst:224.0.0.2
+pro:IGMP
+The Network Traffic:0 bytes/s
+
+src:192.168.1.117
+dst:180.97.33.108
+pro:Unknown
+The Network Traffic:0 bytes/s
+
+src:192.168.1.117
+dst:239.255.255.250
+pro:Unknown
+The Network Traffic:0 bytes/s
+
+src:192.168.1.117
+dst:180.97.33.108
+pro:ICMP
+The Network Traffic:7 bytes/s
+
+src:192.168.1.29
+dst:224.0.0.252
+pro:Unknown
+The Network Traffic:0 bytes/s
+
+src:192.168.1.29
+dst:224.0.0.251
+pro:Unknown
+The Network Traffic:0 bytes/s
+
+src:192.168.1.1
+dst:224.0.0.1
+pro:IGMP
+The Network Traffic:0 bytes/s
+
+src:192.168.1.52
+dst:192.168.1.117
+pro:ms-do
+The Network Traffic:0 bytes/s
+
+src:1.192.193.180
+dst:192.168.1.117
+pro:http
+The Network Traffic:4 bytes/s
+
+src:192.168.1.241
+dst:224.0.0.2
+pro:Unknown
+The Network Traffic:1 bytes/s
+
+src:192.168.1.79
+dst:192.168.1.255
+pro:ssdp
+This IP appears only once!
+
+src:192.168.1.117
+dst:101.251.212.238
+pro:https
+The Network Traffic:12 bytes/s
+
+src:192.168.1.117
+dst:203.208.41.173
+pro:https
+The Network Traffic:12 bytes/s
+
+src:192.168.1.117
+dst:101.251.212.233
+pro:https
+The Network Traffic:357 bytes/s
+
+src:192.168.1.117
+dst:106.3.135.78
+pro:https
+The Network Traffic:357 bytes/s
+
+src:192.168.1.44
+dst:192.168.1.255
+pro:netbios-ns
+The Network Traffic:3 bytes/s
+
+src:192.168.1.44
+dst:224.0.0.2
+pro:IGMP
+The Network Traffic:80 bytes/s
+
+src:192.168.1.241
+dst:192.168.1.255
+pro:netbios-ns
+The Network Traffic:57 bytes/s
+
+src:192.168.1.117
+dst:183.3.226.92
+pro:http
+The Network Traffic:3 bytes/s
+
+src:192.168.1.117
+dst:61.147.75.53
+pro:http
+The Network Traffic:3 bytes/s
+
+src:192.168.1.117
+dst:14.215.138.25
+pro:https
+The Network Traffic:4 bytes/s
+
+src:192.168.1.117
+dst:219.142.142.150
+pro:http
+The Network Traffic:3 bytes/s
+
+src:192.168.1.117
+dst:125.64.102.187
+pro:http
+The Network Traffic:4 bytes/s
+
+src:192.168.1.117
+dst:118.123.210.33
+pro:https
+The Network Traffic:215 bytes/s
+
+src:192.168.1.117
+dst:203.208.40.78
+pro:https
+The Network Traffic:12 bytes/s
+
+src:192.168.1.117
+dst:67.228.221.221
+pro:https
+The Network Traffic:46 bytes/s
+
+src:192.168.1.117
+dst:45.33.49.119
+pro:https
+The Network Traffic:387 bytes/s
+
+src:192.168.1.117
+dst:119.84.93.131
+pro:http
+The Network Traffic:270 bytes/s
+
+src:192.168.1.117
+dst:125.88.193.250
+pro:https
+The Network Traffic:262 bytes/s
+
+src:192.168.1.117
+dst:180.163.251.76
+pro:https
+The Network Traffic:61 bytes/s
+
+src:192.168.1.117
+dst:182.140.140.226
+pro:https
+The Network Traffic:16 bytes/s
+
+src:192.168.1.117
+dst:101.201.170.152
+pro:https
+The Network Traffic:12 bytes/s
+
+src:192.168.1.117
+dst:182.140.230.57
+pro:https
+The Network Traffic:55 bytes/s
+
+src:192.168.1.117
+dst:180.163.255.159
+pro:https
+The Network Traffic:21 bytes/s
+
+src:192.168.1.117
+dst:180.163.251.178
+pro:https
+The Network Traffic:6 bytes/s
+
+src:192.168.1.117
+dst:36.110.236.114
+pro:https
+The Network Traffic:6 bytes/s
+
+src:192.168.1.117
+dst:180.163.255.156
+pro:https
+The Network Traffic:30 bytes/s
+
+src:192.168.1.117
+dst:106.39.162.156
+pro:https
+The Network Traffic:7 bytes/s
+
+src:192.168.1.117
+dst:125.65.43.108
+pro:https
+The Network Traffic:32 bytes/s
+
+src:192.168.1.117
+dst:140.143.49.61
+pro:https
+The Network Traffic:20 bytes/s
+
+src:192.168.1.117
+dst:119.84.93.133
+pro:https
+The Network Traffic:21 bytes/s
+
+src:192.168.1.117
+dst:101.201.173.208
+pro:https
+The Network Traffic:30 bytes/s
+
+src:192.168.1.117
+dst:180.149.133.122
+pro:https
+The Network Traffic:52 bytes/s
+
+src:192.168.1.117
+dst:123.206.5.173
+pro:https
+The Network Traffic:25 bytes/s
+
+src:192.168.1.117
+dst:117.122.217.19
+pro:https
+The Network Traffic:33 bytes/s
+
+src:192.168.1.117
+dst:119.84.93.131
+pro:https
+The Network Traffic:679 bytes/s
+
+src:192.168.1.117
+dst:118.112.13.23
+pro:https
+The Network Traffic:15 bytes/s
+
+src:192.168.1.117
+dst:110.185.121.219
+pro:http
+The Network Traffic:74 bytes/s
+
+src:192.168.1.117
+dst:39.96.132.69
+pro:https
+The Network Traffic:21 bytes/s
+
+src:192.168.1.117
+dst:180.97.104.146
+pro:https
+The Network Traffic:9 bytes/s
+
+src:192.168.1.117
+dst:220.181.7.190
+pro:https
+The Network Traffic:50 bytes/s
+
+src:192.168.1.117
+dst:1.82.190.82
+pro:https
+This IP appears only once!
+
+src:192.168.1.117
+dst:182.140.147.106
+pro:https
+This IP appears only once!
+
+src:192.168.1.117
+dst:1.31.128.204
+pro:https
+This IP appears only once!
+
+src:192.168.1.117
+dst:222.186.49.134
+pro:https
+The Network Traffic:39 bytes/s
+
+src:192.168.1.117
+dst:58.218.215.188
+pro:https
+The Network Traffic:19 bytes/s
+
+src:192.168.1.117
+dst:49.4.65.160
+pro:https
+This IP appears only once!
+
+src:192.168.1.117
+dst:119.84.65.230
+pro:https
+The Network Traffic:19 bytes/s
+
+src:192.168.1.117
+dst:119.84.134.218
+pro:https
+The Network Traffic:56 bytes/s
+
+src:192.168.1.117
+dst:119.84.12.27
+pro:https
+The Network Traffic:64 bytes/s
+
+src:192.168.1.117
+dst:1.192.194.199
+pro:http
+The Network Traffic:58 bytes/s
+
+src:192.168.1.117
+dst:180.97.33.108
+pro:https
+The Network Traffic:221 bytes/s
+
+src:192.168.1.117
+dst:192.168.1.1
+pro:domain
+The Network Traffic:34 bytes/s
+
+src:0.0.0.0
+dst:255.255.255.255
+pro:bootps
+The Network Traffic:0 bytes/s
+
+src:123.151.78.41
+dst:192.168.1.117
+pro:Unknown
+The Network Traffic:48 bytes/s
+
+src:118.112.11.101
+dst:192.168.1.117
+pro:http
+The Network Traffic:0 bytes/s
+
+src:192.168.1.117
+dst:180.97.33.107
+pro:https
+The Network Traffic:100 bytes/s
+
