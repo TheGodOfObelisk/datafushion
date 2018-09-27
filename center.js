@@ -31,6 +31,8 @@ socket.on('message',function(data){
 		socket.send("end_agent_deciding ['192.168.1.133','192.168.1.134','192.168.1.135']")
 	if(count == 9)
 		socket.send("start_deploy_agent ['192.168.1.133','192.168.1.134','192.168.1.135']")
+	if(count == 10)
+		socket.send("end_deploy_agent ['192.168.1.133','192.168.1.134','192.168.1.135']")
 
 })
 socket.on('open',function(){

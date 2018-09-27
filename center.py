@@ -981,7 +981,7 @@ class switch_case(object):
 						if len(error_info) > 1:
 							print(str(error_info[0]) + ' ' + str(error_info[1]))
 					#工具表	ps：工具关系表怎么弄？模拟的程序中把工具关系表的更新设在构建自组织网络任务中
-					#工具表中的编号何解？臆测1代表主动探测器，2代表被动探测器
+					#工具表中的编号何解？
 					now_time_t = datetime.datetime.now()
 					now_time = datetime.datetime.strftime(now_time_t,'%Y/%m/%d %H:%M:%S')#转为sql需要的日期形式
 					
@@ -1242,9 +1242,87 @@ class switch_case(object):
 
 	#本条指令在上一条指令得到反馈之后执行，本条指令的反馈代表一轮探测+决策已经结束
 	#要为新一轮的子节点做好准备工作，如注入工作表的更新，工具表的更新，工具关系表的更新。。。（仿照初始化的准备工作来做）
+	#ips_old为本轮的旧节点，ips_new为刚刚选出的新节点 = =也可以从result.json中读取，可以修改
     #correspond to 11
-    def case_end_deploy_agent(self, ips):
-        print('case_end_deploy_agent: ' + ips)
+    def case_end_deploy_agent(self, ips_old):
+        print('case_end_deploy_agent: ' + ips_old)
+        reg = re.compile(r'(?<![\.\d])(?:\d{1,3}\.){3}\d{1,3}(?![\.\d])')
+        ips_old_t = re.findall(reg, ips_old)
+        #ips_new_t = re.findall(reg, ips_new)
+        with open("result.json","r") as load_f:
+			load_dict = json.load(load_f)
+			for item in load_dict['tasks']:
+				if item['type'] == "activeDetection":#to avoid dulipcation
+					s_index = item['hosts'][0].find(':')
+					ip_new = item['hosts'][0][0:s_index]
+					#修改注入表（可能不需要，不需要的话就删掉）
+					try:
+						cursor_target.execute("""
+						select ID from {username}.HOST where IP=:ip
+						""".format(username=db_username_target),ip=ip_new)
+						result = cursor_target.fetchall()
+						host_id = result[0][0]
+						if len(result) > 1:
+							print("Error: more than one record noticing the same ip")
+						elif len(result) == 0:
+							print("Error: the new agent ip hasn't been inserted into the HOST table")
+					except:
+						print("Error:fail to fetch ID from HOST")
+						error_info = sys.exc_info()
+						if len(error_info) > 1:
+							print(str(error_info[0]) + ' ' + str(error_info[1]))
+					try:
+						cursor_target.execute("""
+						declare t_count number(10);
+						begin
+							select count(*) into t_count from {username}.INJECTION where TARGET_ID=:h_id;
+							if t_count=0 then
+								insert into {username}.INJECTION(ID,UPDATED,TARGET_ID,PERIOD) values(:in_id,'1',:h_id,'start');
+							else
+								update {username}.INJECTION set UPDATED=1,PERIOD='start';
+							end if;
+						end;
+						""".format(username=db_username_target),in_id=str(uuid.uuid1()),h_id=host_id)
+					except:
+						print("Error:fail to update the INJECTION table")
+						error_info = sys.exc_info()
+						if len(error_info) > 1:
+							print(str(error_info[0]) + ' ' + str(error_info[1]))
+					#修改工具表
+					
+					#修改工具关系表
+					
+					#再次修改注入表（可能不需要，不需要的话就删掉）
+					try:
+						cursor_target.execute("""
+						select ID from {username}.INJECTION where TARGET_ID=:ho_id
+						""".format(username=db_username_target),ho_id=host_id)
+						result = cursor_target.fetchall()
+						if len(result) > 1:
+							print("Error:more than one record noticing the same host in INJECTION table")
+						injection_id = result[0][0]
+					except:
+						print("Error:fail to fetch ID from the INJECTION table")
+						error_info = sys.exc_info()
+						if len(error_info) > 1:
+							print(str(error_info[0]) + ' ' + str(error_info[1]))
+					try:
+						cursor_target.execute("""
+						update {username}.INJECTION set UPDATED=1,PERIOD='done' where TARGET_ID=:ho_id and ID=:in_id
+						""".format(username=db_username_target),ho_id=host_id,in_id=injection_id)
+					except:
+						print("Error:fail to update the INJECTION table")
+						error_info = sys.exc_info()
+						if len(error_info) > 1:
+							print(str(error_info[0]) + ' ' + str(error_info[1]))
+		#更新任务表
+        for ip in ips_old_t:
+			#取主机id
+			host_id = GetHostIdByIp(ip)
+			#取该主机对应工具的id
+			entity_id = GetEntityIdByHostId(host_id)
+			UpdateTask(host_id, entity_id, "渗透扩散", "done", "正在决策选取新的Agent")
+        conn_target.commit()
 
     # a method that is called by default
     # it is similar to the default segment in switch case structure
@@ -1279,7 +1357,7 @@ class Th(threading.Thread):
 						if item == command:
 							continue
 						args.append(item)
-					if command == "start_detect_live_host" or command == "start_file_transmitting" or command == "end_file_transmitting" or command == "end_recover_topo" or command == "start_agent_deciding" or command == "end_agent_deciding" or command == "start_deploy_agent":
+					if command == "start_detect_live_host" or command == "start_file_transmitting" or command == "end_file_transmitting" or command == "end_recover_topo" or command == "start_agent_deciding" or command == "end_agent_deciding" or command == "start_deploy_agent" or command == "end_deploy_agent":
 						if len(args) != 1:
 							print("Error:Incorrect arguments, fail to execute this command")
 						else:
