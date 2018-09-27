@@ -41,6 +41,9 @@ if not (len(comnand_arguments)==3):
 dbconfigs = comnand_arguments[1]
 dbconfigs_target = comnand_arguments[2]
 
+global entity_parent_id
+entity_parent_id = ""#工具关系表中记录的父id
+
 #test db connection
 #PROJECT/PROJECT@192.168.1.52:1521/ORCL 我们的
 try:
@@ -118,6 +121,19 @@ def prefix2mask(mask_int):#将网络前缀转为子网掩码
 	tmpmask = [''.join(bin_arr[i * 8:i * 8 + 8]) for i in range(4)]
 	tmpmask = [str(int(tmpstr, 2)) for tmpstr in tmpmask]
 	return '.'.join(tmpmask)
+
+def getPidOfEntity():#获取工具关系表要用的父id
+	try:
+		cursor_target.execute("""
+		select ID from {username}.ENTITY
+		""".format(username=db_username_target))
+		result = cursor_target.fetchall()
+		return result[0][0]
+	except:
+		print("Error:fail to get the ENTITY ID")
+		error_info = sys.exc_info()
+		if len(error_info) > 1:
+			print(str(error_info[0]) + ' ' + str(error_info[1]))
 
 """start"""
 def update_oracle(sql,var):    #update the database of ourselvesprint(conn.version())
@@ -762,11 +778,11 @@ class switch_case(object):
 							select ISAGENT into isAgent from {username}.HOST where IP=:ip;
 								case isAgent
 									when 0 then
-										update {username}.HOST set ISAGENT = 2, ISNEW = 0, HISDEL = 0;
+										update {username}.HOST set ISAGENT = 2, ISNEW = 0, HISDEL = 0 where IP=:ip;
 									when 1 then
-										update {username}.HOST set ISAGENT = 2,ISNEW = 0,HISDEL = 0;
+										update {username}.HOST set ISAGENT = 2,ISNEW = 0,HISDEL = 0 where IP=:ip;
 									when 2 then
-										update {username}.HOST set ISNEW = 0,HISDEL = 0;
+										update {username}.HOST set ISNEW = 0,HISDEL = 0 where IP=:ip;
 								end case;
 						exception
 								when NO_DATA_FOUND then
@@ -797,11 +813,11 @@ class switch_case(object):
 								select ISAGENT into isAgent from {username}.HOST where IP=:ip;
 									case isAgent
 										when 0 then
-											update {username}.HOST set ISAGENT=1,ISNEW=0,HISDEL=0;
+											update {username}.HOST set ISAGENT=1,ISNEW=0,HISDEL=0 where IP=:ip;
 										when 1 then
-											update {username}.HOST set ISNEW=0,HISDEL=0;
+											update {username}.HOST set ISNEW=0,HISDEL=0 where IP=:ip;
 										when 2 then
-											update {username}.HOST set ISAGENT=1,ISNEW=0,HISDEL=0;
+											update {username}.HOST set ISAGENT=1,ISNEW=0,HISDEL=0 where IP=:ip;
 									end case;
 							exception
 									when NO_DATA_FOUND then
@@ -824,7 +840,7 @@ class switch_case(object):
 							begin
 								select count(*) into t_count from {username}.HOST where IP=:ip;
 								if t_count>0 then
-									update {username}.HOST set UPDATED=1,NET=:subnet;
+									update {username}.HOST set UPDATED=1,NET=:subnet where IP=:ip;
 								else
 									insert into {username}.HOST(ID,UPDATED,OS,NET,IP,PORT,BUSINESSTYPE,MAC,PROCESS,ATTACKED,KEY,ENTRY) values(:id,'1','Unknown',:subnet,:ip,0,NULL,'Unknown',NULL,'0','0','1');
 								end if;
@@ -861,7 +877,7 @@ class switch_case(object):
 							if t_count=0 then
 								insert into {username}.INJECTION(ID,UPDATED,TARGET_ID,PERIOD) values(:in_id,'1',:h_id,'start');
 							else
-								update {username}.INJECTION set UPDATED=1,PERIOD='start';
+								update {username}.INJECTION set UPDATED=1,PERIOD='start' where TARGET_ID=:h_id;
 							end if;
 						end;
 						""".format(username=db_username_target),in_id=str(uuid.uuid1()),h_id=host_id)
@@ -906,7 +922,7 @@ class switch_case(object):
 							if t_count=0 then
 								insert into {username}.SITE(ID,UPDATED,STATUS,NAME,DETAIL,ADDRESS,NET,TYPE) values(:id,'1','online',:name,NULL,NULL,:subnet,'2');
 							else
-								update {username}.SITE set NET=:subnet,UPDATED=1,STATUS='online';
+								update {username}.SITE set NET=:subnet,UPDATED=1,STATUS='online' where NAME=:name;
 							end if;
 						end;
 						""".format(username=db_username_target),id=str(uuid.uuid1()),name=site_name,subnet=subnet_addr)
@@ -953,7 +969,7 @@ class switch_case(object):
 							if t_count=0 then
 								insert into {username}.SITE_SEGMENT_REL(ID,UPDATED,SITE_ID,SEGMENT_ID,TRAFFIC) values(:id,'1',:site_id,:seg_id,'0.06kb/s');
 							else
-								update {username}.SITE_SEGMENT_REL set UPDATED=1;
+								update {username}.SITE_SEGMENT_REL set UPDATED=1 where SITE_ID=:site_id and SEGMENT_ID=:seg_id;
 							end if;
 						end;
 						""".format(username=db_username_target),id=str(uuid.uuid1()),site_id=site_id_t,seg_id=segment_id)
@@ -971,7 +987,7 @@ class switch_case(object):
 							if t_count=0 then
 								insert into {username}.SEGMENT_HOST_REL(ID,UPDATED,SEGMENT_ID,HOST_ID,TRAFFIC) values(:id,'1',:sg_id,:ho_id,'0.02kb/s');
 							else
-								update {username}.SEGMENT_HOST_REL set UPDATED=1;
+								update {username}.SEGMENT_HOST_REL set UPDATED=1 where SEGMENT_ID=:sg_id and HOST_ID=:ho_id;
 							end if;
 						end;
 						""".format(username=db_username_target),id=str(uuid.uuid1()),sg_id=segment_id,ho_id=host_id)
@@ -993,7 +1009,7 @@ class switch_case(object):
 							if t_count=0 then
 								insert into {username}.ENTITY(ID,UPDATED,PLATFORM,LOAD,DESCRIPTION,ONLINE_TIME,HOST_ID,NUM,STATUS) values(:id,'1',NULL,NULL,NULL,TO_TIMESTAMP(:time,'YYYY/MM/DD HH24:MI:SS'),:ho_id,'1','online');
 							else
-								update {username}.ENTITY set UPDATED=1,STATUS='online';
+								update {username}.ENTITY set UPDATED=1,STATUS='online' where HOST_ID=:ho_id;
 							end if;
 						end;
 						""".format(username=db_username_target),id=str(uuid.uuid1()),ho_id=host_id,time=now_time)
@@ -1018,13 +1034,16 @@ class switch_case(object):
 							print(str(error_info[0]) + ' ' + str(error_info[1]))
 					try:
 						cursor_target.execute("""
-						update {username}.INJECTION set UPDATED=1,PERIOD='done' where TARGET_ID=:ho_id and ID=:in_id
-						""".format(username=db_username_target),ho_id=host_id,in_id=injection_id)
+						update {username}.INJECTION set UPDATED=1,PERIOD='done' where ID=:in_id
+						""".format(username=db_username_target),in_id=injection_id)
 					except:
 						print("Error:fail to update the INJECTION table")
 						error_info = sys.exc_info()
 						if len(error_info) > 1:
 							print(str(error_info[0]) + ' ' + str(error_info[1]))
+		#确定工具关系表的父id，存在全局变量中，以后备用
+		global entity_parent_id
+		entity_parent_id = getPidOfEntity()
 		conn.commit()
 		conn_target.commit()
     #correspond to 2
@@ -1279,7 +1298,7 @@ class switch_case(object):
 							if t_count=0 then
 								insert into {username}.INJECTION(ID,UPDATED,TARGET_ID,PERIOD) values(:in_id,'1',:h_id,'start');
 							else
-								update {username}.INJECTION set UPDATED=1,PERIOD='start';
+								update {username}.INJECTION set UPDATED=1,PERIOD='start' where TARGET_ID=:h_id;
 							end if;
 						end;
 						""".format(username=db_username_target),in_id=str(uuid.uuid1()),h_id=host_id)
@@ -1288,10 +1307,59 @@ class switch_case(object):
 						error_info = sys.exc_info()
 						if len(error_info) > 1:
 							print(str(error_info[0]) + ' ' + str(error_info[1]))
-					#修改工具表
-					
+					#修改工具表，为新选出的子节点增加工具
+					now_time_t = datetime.datetime.now()
+					now_time = datetime.datetime.strftime(now_time_t,'%Y/%m/%d %H:%M:%S')
+					try:
+						cursor_target.execute("""
+						declare t_count number(10);
+						begin
+							select count(*) into t_count from {username}.ENTITY where HOST_ID=:ho_id;
+							if t_count=0 then
+								insert into {username}.ENTITY(ID,UPDATED,PLATFORM,LOAD,DESCRIPTION,ONLINE_TIME,HOST_ID,NUM,STATUS) values(:id,'1',NULL,NULL,NULL,TO_TIMESTAMP(:time,'YYYY/MM/DD HH24:MI:SS'),:ho_id,'1','online');
+							else
+								update {username}.ENTITY set UPDATED=1,STATUS='online' where HOST_ID=:ho_id;
+							end if;
+						end;
+						""".format(username=db_username_target),id=str(uuid.uuid1()),ho_id=host_id,time=now_time)
+					except:
+						print("Error:fail to update the ENTITY table")
+						error_info = sys.exc_info()
+						if len(error_info) > 1:
+							print(str(error_info[0]) + ' ' + str(error_info[1]))
 					#修改工具关系表
-					
+					global entity_parent_id
+					if entity_parent_id == "":
+						print("Error:parent_id is empty, try to retrive it")
+						entity_parent_id = getPidOfEntity()
+					try:
+						cursor_target.execute("""
+						select ID from {username}.ENTITY where HOST_ID=:ho_id
+						""".format(username=db_username_target), ho_id=host_id)
+						result = cursor_target.fetchall()
+						entity_id = result[0][0]
+					except:
+						print("Error:fail to fetch id from the ENTITY table")
+						error_info = sys.exc_info()
+						if len(error_info) > 1:
+							print(str(error_info[0]) + ' ' + str(error_info[1]))
+					try:
+						cursor_target.execute("""
+						declare t_count number(10);
+						begin
+							select count(*) into t_count from {username}.ENTITY_ENTITY_REL where CHILD_ID=:c_id;
+							if t_count=0 then
+								insert into {username}.ENTITY_ENTITY_REL(ID,UPDATED,PARENT_ID,CHILD_ID) values(:id,'1',:p_id,:c_id);
+							else
+								update {username}.ENTITY_ENTITY_REL set UPDATED=1 where CHILD_ID=:c_id;
+							end if;
+						end;
+						""".format(username=db_username_target),id=str(uuid.uuid1()),p_id=entity_parent_id,c_id=entity_id)
+					except:
+						print("Error:fail to update the ENTITY_ENTITY_REL table")
+						error_info = sys.exc_info()
+						if len(error_info) > 1:
+							print(str(error_info[0]) + ' ' + str(error_info[1]))
 					#再次修改注入表（可能不需要，不需要的话就删掉）
 					try:
 						cursor_target.execute("""
@@ -1308,8 +1376,8 @@ class switch_case(object):
 							print(str(error_info[0]) + ' ' + str(error_info[1]))
 					try:
 						cursor_target.execute("""
-						update {username}.INJECTION set UPDATED=1,PERIOD='done' where TARGET_ID=:ho_id and ID=:in_id
-						""".format(username=db_username_target),ho_id=host_id,in_id=injection_id)
+						update {username}.INJECTION set UPDATED=1,PERIOD='done' where ID=:in_id
+						""".format(username=db_username_target),in_id=injection_id)
 					except:
 						print("Error:fail to update the INJECTION table")
 						error_info = sys.exc_info()
