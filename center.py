@@ -805,6 +805,7 @@ class switch_case(object):
 					s_index = item['hosts'][0].find(':')
 					host_ip = item['hosts'][0][0:s_index]
 					host_subnet = item['taskArguments']
+					host_subnet_without_prefix = host_subnet.split('/')[0]
 					try:
 						cursor.execute("""
 							declare
@@ -830,6 +831,22 @@ class switch_case(object):
 						error_info = sys.exc_info()
 						if len(error_info) > 1:
 							print(str(error_info[0]) + ' ' + str(error_info[1]))
+					#需要初始化我们数据库中的AGENT表
+					try:
+						cursor.execute("""
+							declare t_count number(10);
+							begin
+								select count(*) into t_count from {username}.AGENT where NET=:subnet;
+								if t_count=0 then
+									insert into {username}.AGENT(NET) values(:subnet);
+								end if;
+							end;
+						""".format(username=db_username),subnet=host_subnet)
+					except:
+						print("Error:can not initialize database")
+						error_info = sys.exc_info()
+						if len(error_info) > 1:
+							print(str(error_info[0]) + ' ' + str(error_info[1]))
 					#设置别人数据中的初始agent
 					#同样是config.json中的主机
 					#步骤：1.更新HOST表
@@ -845,7 +862,7 @@ class switch_case(object):
 									insert into {username}.HOST(ID,UPDATED,OS,NET,IP,PORT,BUSINESSTYPE,MAC,PROCESS,ATTACKED,KEY,ENTRY) values(:id,'1','Unknown',:subnet,:ip,0,NULL,'Unknown',NULL,'0','0','1');
 								end if;
 							end;
-						""".format(username=db_username_target),id=str(uuid.uuid1()),ip=host_ip,subnet=host_subnet)
+						""".format(username=db_username_target),id=str(uuid.uuid1()),ip=host_ip,subnet=host_subnet_without_prefix)
 					except:
 						print("Error:can not initialize database")
 						error_info = sys.exc_info()
