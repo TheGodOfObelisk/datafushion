@@ -279,10 +279,10 @@ def update_protocol(file_full_path):
 					pro = protocol[2]
 				if protocol[5] != 0 and traffic == 0:
 					traffic = int(protocol[5])
-				var = {'id':protocol[0],'type':pro,'traffic':traffic}
+				var = {'id':protocol[0],'type':pro,'traffic':str(traffic)+'kb/s'}
 				sql = 'update PROTOCOL set TYPE=:type,TRAFFIC=:traffic where ID=:id'
 			else:
-				var = {'id':str(uuid.uuid1()),'type':pro,'host1_id':host1_id[0],'host2_id':host2_id[0],'traffic':traffic}
+				var = {'id':str(uuid.uuid1()),'type':pro,'host1_id':host1_id[0],'host2_id':host2_id[0],'traffic':str(traffic)+'kb/s'}
 				sql = "insert into PROTOCOL (ID,UPDATED,TYPE,HOST1_ID,HOST2_ID,TRAFFIC)values(:id,'1',:type,:host1_id,:host2_id,:traffic)"
 			update_oracle_target(sql,var)
 	except Exception as err:
@@ -517,7 +517,7 @@ def update_segment_router_rel():
 					cursor_target.execute('select * from SEGMENT_ROUTER_REL where SEGMENT_ID=:sid and ROUTER_ID=:rid',var)
 					cursor_target.fetchone()
 					if (cursor_target.rowcount) == 0:
-						var = {'id':str(uuid.uuid1()),'sid':segment[0],'rid':router[0],'traffic':random.randint(1,5000)}
+						var = {'id':str(uuid.uuid1()),'sid':segment[0],'rid':router[0],'traffic':str(random.randint(1,5000))+'kb/s'}
 						sql = 'insert into SEGMENT_ROUTER_REL (ID,UPDATED,SEGMENT_ID,ROUTER_ID,TRAFFIC)values(:id,1,:sid,:rid,:traffic)'
 						update_oracle_target(sql,var)
 						break
@@ -563,7 +563,7 @@ def update_segment_host_rel():
 					#cursor.execute('select * from SEGMENT_HOST_REL where SEGMENT_ID='+segment[0]+' and HOST_ID='+ip[0]+'')
 					cursor_target.fetchone()
 					if (cursor_target.rowcount) == 0:
-						var = {'id':str(uuid.uuid1()),'sid':segment[0],'hid':ip[0],'traffic':random.randint(1,2000)}
+						var = {'id':str(uuid.uuid1()),'sid':segment[0],'hid':ip[0],'traffic':str(random.randint(1,2000))+'kb/s'}
 						sql = 'insert into SEGMENT_HOST_REL (ID,UPDATED,SEGMENT_ID,HOST_ID,TRAFFIC)values(:id,1,:sid,:hid,:traffic)'
 						update_oracle_target(sql,var)
 						break
@@ -613,7 +613,7 @@ def update_router_router_rel(file_full_path):
 			if cursor_target.rowcount == 1:
 				print('The router connection relationship existed')
 				continue
-			var = {'ID':str(uuid.uuid1()),'ROUTER1_ID':router1_id[0],'ROUTER2_ID':router2_id[0],'TRAFFIC':random.randint(1,5000)}
+			var = {'ID':str(uuid.uuid1()),'ROUTER1_ID':router1_id[0],'ROUTER2_ID':router2_id[0],'TRAFFIC':str(random.randint(1,5000))+'kb/s'}
 			sql = (
 				"insert into ROUTER_ROUTER_REL (ID,UPDATED,ROUTER1_ID,ROUTER2_ID,TRAFFIC)"
 				"values(:ID,'1',:ROUTER1_ID,:ROUTER2_ID,:TRAFFIC)"
@@ -686,7 +686,7 @@ def update_site_segment_rel():
 		for segment in segments:
 			for site in sites:
 				if segment[1] == site[1]:
-					var = {'id':str(uuid.uuid1()),'site_id':site[0],'segment_id':segment[0],'traffic':random.randint(1,5000)}
+					var = {'id':str(uuid.uuid1()),'site_id':site[0],'segment_id':segment[0],'traffic':str(random.randint(1,5000))+'kb/s'}
 					sql = (
 						"insert into SITE_SEGMENT_REL (ID,UPDATED,SITE_ID,SEGMENT_ID,TRAFFIC)"
 						"values(:id,'1',:site_id,:segment_id,:traffic)"
