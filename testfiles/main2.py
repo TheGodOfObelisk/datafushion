@@ -1,8 +1,10 @@
-#继续main.py部分的功能，完成全部决策
+#-*- coding: UTF-8 -*- 
 import os,sys,re,json
 import cx_Oracle
 from socket import inet_aton, inet_ntoa
 from struct import unpack, pack
+#继续main.py部分的功能，完成全部决策
+#编辑于2018年10月25日
 
 def _check_ip(ip_add):#检验ip地址字符串是否合法
     """
@@ -63,7 +65,8 @@ except:
     print('Exception:can not connect to the database')
     error_info = sys.exc_info()
     if len(error_info) > 1:
-        print(str(error_info[0]) + ' '+str(error_info[1]))
+        print(str(error_info[0]) + ' if len(error_info) > 1:
+            print(str(error_info[0]) + ' ' + str(error_info[1]))'+str(error_info[1]))
     sys.exit(1)
 cursor = conn.cursor()
 
@@ -78,7 +81,7 @@ except:
 #读出带掩码的json文件中信息
 #暂时认为输入的是json文件，如果不是的话再改
 #json格式，示例：
-#{'hosts': [{'ip': '192.168.1.52', 'mask': '255.255.255.0'}, {'ip': '192.168.1.123', 'mask': '255.255.255.128'}, {'ip': '192.168.1.157', 'mask': '255.255.255.0'}]}
+#{'hosts': [{'ip': '192.168.1.52', 'mask': '255.255.255.0', 'gateway': '192.168.1.1'}, {'ip': '192.168.1.123', 'mask': '255.255.255.128', 'gateway': '192.168.1.1'}, {'ip': '192.168.1.157', 'mask': '255.255.255.0', 'gateway': '192.168.1.1'}]}
 with open(filename,"r") as load_f:
     load_dict = json.load(load_f)
     print(load_dict)
@@ -92,6 +95,18 @@ print(ip_mask)
 prefix = 0
 for item in ip_mask:
     #计算该节点所属的子网地址（带网络前缀的形式），如192.168.1.128/25
+    if item["mask"] == "" or item["gateway"] == "":
+        #取消未获取到子网掩码的ip的待选资格，isagent置为3，认为它们不在线或者未被部署个体节点程序
+        try:
+            cursor.execute("""
+            update {username}.HOST set ISAGENT=3 where IP=:ip
+            """.format(username=db_username),ip=item["ip"])
+        except:
+            print("Error:can not update")
+            error_info = sys.exc_info()
+            if len(error_info) > 1:
+                print(str(error_info[0]) + ' ' + str(error_info[1]))
+        continue
     prefix = mask2prefix(item["mask"])
     tmp_sub = calcSubnet(item["ip"],item["mask"])
     if tmp_sub == False:
@@ -101,12 +116,22 @@ for item in ip_mask:
     #算出子网，下一步准备写数据库（只更新它们的子网字段）
     try:
         cursor.execute("""
-        update "{username}"."Host" set "Subnet"=:sb where "IP"=:ip
+        update {username}.HOST set HMASK=:sb where IP=:ip
         """.format(username=db_username),sb=subnet,ip=item["ip"])
     except:
         print("Error:can not update a specified ip's subnet")
         error_info = sys.exc_info()
         if len(error_info) > 1:
+            print(str(error_info[0]) + ' ' + str(error_info[1]))
+    #剔除默认网关的参选权，isAgent代表默认网关
+    try:
+		cursor.execute("""
+		update {username}.HOST set ISAGENT=5 where IP=:gateway
+		""".format(username=db_username),gateway=item["gateway"])
+    except:
+		print("Error:can not update gateway information")
+		error_info = sys.exc_info()
+		if len(error_info) > 1:
             print(str(error_info[0]) + ' ' + str(error_info[1]))
     print(subnet)
 
@@ -118,7 +143,7 @@ for item in ip_mask:
 # 下面修改后的部分未经测试
 try:
     cursor.execute("""
-        select distinct "Net" from "%s"."Agent"
+        select distinct NET from %s.AGENT
         """ %db_username)
 except:
     print('error when selecting')
@@ -137,7 +162,7 @@ hasNewHosts = 0#标志决策结果是否为新节点
 #首先选取同时满足isAgent=0和isNew=1的节点
 try:
     cursor.execute("""
-        select "IP" as "tIP","Hweight" as "tHweight", "Subnet" as "tSubnet"  from "%s"."Host" where "isAgent"= 0 and "isNew"= 1 and "HisDel"= 0 ORDER BY "Hweight" DESC  
+        select IP as tIP,HWEIGHT as tHweight, HMASK as tSubnet  from %s.HOST where ISAGENT =0 and ISNEW = 1 and HISDEL = 0 ORDER BY HWEIGHT DESC  
             """ % db_username)
 except:
     print('error when selecting')
@@ -187,7 +212,7 @@ if not result or not AgentIP:
     print('在旧节点中决策')
     try:
         cursor.execute("""
-            select "IP" as "tIP", "Hweight" as "tHweight", "Subnet" as "tSubnet" from "%s"."Host" where "isAgent" = 0 and "isNew" = 0 and "HisDel" = 0 ORDER BY "Hweight" DESC           
+            select IP as tIP, HWEIGHT as tHweigh, HMASK as tSubnet from %s.HOST where ISAGENT = 0 and ISNEW = 0 and HISDEL = 0 ORDER BY HWEIGHT DESC           
             """ % db_username)
     except:
         print('error when selecting')
@@ -237,7 +262,7 @@ if AgentIP:
     for item in AgentIP:
         try:
             cursor.execute("""
-            select "Subnet" from "%s"."Host" where "IP"=:ip
+            select HMASK from %s.HOST where IP=:ip
             """ % db_username,ip=item)
         except:
             print('error when selecting')
@@ -250,6 +275,13 @@ if AgentIP:
             if result[0][0] not in SubnetTmp:#ETC: result [('36.110.171.0/24',)] result[0] ('36.110.171.0/24') 36.110.171.0/24
                 SubnetTmp.append(result[0][0])
                 FinalAgentIP.append(item)
+#如果筛完同网段的之后，什么都没有了，那就不筛了，就从同网段中的选取新个体节点，后面也不要将它们的isAgent置为2了。
+#此处意为优先选取不同网段的主机作为新的子节点
+if FinalAgentIP:
+	print('从新子网中选取')
+else:
+	print('仍然从旧子网（已经含有其它子节点的）中选取')
+	FinalAgentIP = AgentIP
 
 print('最终选出来的是：')
 print(FinalAgentIP)
@@ -257,18 +289,18 @@ print(FinalAgentIP)
 #更新部分要增加Agents表的更新
 #决策阶段2（更新）
 print('***********决策阶段2（更新）*************')
-if FinalAgentIP:#如果决策不出来一切都免谈
-    print('将所有节点的isNew字段置为0，HisDel字段置为1')
-    try:
-        cursor.execute("""
-            update "%s"."Host" set "isNew"= 0,"HisDel"= 1
-            """ % db_username)
-    except:
-        print('error when updating')
-        error_info = sys.exc_info()
-        if len(error_info) > 1:
-            print(str(error_info[0]) + ' ' + str(error_info[1]))
-        sys.exit(1)
+#如果决策不出来一切都免谈，HisDel在最终的最终才置为1，也就是整个一大轮决策结束的时候（改为在常驻进程的初始化步骤中执行）
+print('将所有节点的isNew字段置为0')
+try:
+    cursor.execute("""
+        update %s.HOST set ISNEW = 0
+        """ % db_username)
+except:
+    print('error when updating')
+    error_info = sys.exc_info()
+    if len(error_info) > 1:
+        print(str(error_info[0]) + ' ' + str(error_info[1]))
+    sys.exit(1)
 
 #这个语句还没测
 print('更新Agent表添加子网')
@@ -276,8 +308,14 @@ if SubnetTmp:
     for net in SubnetTmp:
         try:
             cursor.execute("""
-            insert into "{username}"."Agent" values(:sb)
-            """.format(username=db_username),sb=net)
+            declare t_count number(10);
+							begin
+								select count(*) into t_count from {username}.AGENT where NET=:subnet;
+								if t_count=0 then
+									insert into {username}.AGENT(NET) values(:subnet);
+								end if;
+							end;
+            """.format(username=db_username),subnet=net)
         except:
             print('error when inserting')
             error_info = sys.exc_info()
@@ -286,11 +324,13 @@ if SubnetTmp:
             sys.exit(1)
 
 #将所有的在已经有agent的网段内的主机的isAgent置为2，且在这之前，它们的isAgent字段值为0
-#这个语句还没测，恐怕不行
+#但它们仍然有机会参与决策并被选举上（当没有其它不在已有子节点的子网中的主机时）
+#这部分不要了
+'''
 try:
     cursor.execute("""
-        update "{username}"."Host" set "isAgent"=2 where "isAgent"=0 and "Subnet" in(
-        select "Net" from "{username}"."Agent"
+        update {username}.HOST set ISAGENT = 2 where ISAGENT = 0 and HMASK in(
+        select NET from {username}.AGENT
         )""".format(username=db_username))
 except:
     print('error when updating')
@@ -298,12 +338,12 @@ except:
     if len(error_info) > 1:
         print(str(error_info[0]) + ' ' + str(error_info[1]))
     sys.exit(1)
-
+'''
 #把真正选上了的isAgent置为1
 for ip in FinalAgentIP:
     try:
         cursor.execute("""
-        update "%s"."Host" set "isAgent"=1 where "IP"=:newIndividualAgentIP 
+        update %s.HOST set ISAGENT = 1 where IP=:newIndividualAgentIP 
         """ % db_username,newIndividualAgentIP = ip)
     except:
         print('error when updating')
@@ -321,17 +361,25 @@ print('****************决策结束*****************')
 #下面的未经测试
 result = {}
 task_list = []
+ahost = []
+phost = []
+thost = []
+activearg= []
+task1 = {
+    "type":"activeDetection",
+}
+task2 = {
+    "type": "passiveDetection",
+}
+task3 = {
+    "type": "topologicalDiscovery",
+}
 if FinalAgentIP:
-    ahost = []
-    phost = []
-    activearg = ""
-    for ip in AgentIP:
-        ahost.append(ip + ":" + "8082")
-        phost.append(ip + ":" + "8081")
+    for ip in FinalAgentIP:
         try:
             cursor.execute("""
-            select "Subnet" from "%s"."Host" where "IP"=:tip
-            """ % db_username, tip=ip)
+                    select HMASK from %s.HOST where IP=:tip
+                    """ % db_username, tip=ip)
         except:
             print('error when selecting')
             error_info = sys.exc_info()
@@ -339,23 +387,41 @@ if FinalAgentIP:
                 print(str(error_info[0]) + ' ' + str(error_info[1]))
             sys.exit(1)
         res = cursor.fetchall()
-        activearg = res[0][0]#主动探测参数
-    if activearg == "":
-        print('error: incorrect active argument or no appropriate subnet content')
-        sys.exit(1)
-    task1 = {
-        "type":"activeDetection",
-        #"taskArguments":"192.168.0.1/24",
-    }
-    task1["taskArguments"]=activearg
-    task2 = {
-        "type": "passiveDetection",
-        "taskArguments": "-G 600",
-    }
-    task1["hosts"] = ahost
-    task2["hosts"] = phost
-    task_list.append(task1)
-    task_list.append(task2)
+        activearg.append(res[0][0])
+    print(activearg)
+    for index in range(len(FinalAgentIP)):
+        task1 = {
+            "type": "activeDetection",
+        }
+        task2 = {
+            "type": "passiveDetection",
+        }
+        task3 = {
+            "type": "topologicalDiscovery",
+        }
+        ahost.append(FinalAgentIP[index]+":"+"8082")
+        phost.append(FinalAgentIP[index]+":"+"8081")
+        thost.append(FinalAgentIP[index]+":"+"9998")
+        task1["taskArguments"] = activearg[index]
+        task2["taskArguments"] = "-G 600 -P " + FinalAgentIP[index]
+        task3["taskArguments"] =""
+        tmpahost = []
+        tmpphost = []
+        tmpthost = []
+        tmpahost.append(ahost[index])
+        tmpphost.append(phost[index])
+        tmpthost.append(thost[index])
+        print("tmpahost:",tmpahost)
+        print("tmpphost:",tmpphost)
+        task1["hosts"] = tmpahost
+        task2["hosts"] = tmpphost
+        task3["hosts"] = tmpthost
+        task_list.append(task1)
+        task_list.append(task2)
+        task_list.append(task3)
+        print("task_list(1):", task_list);
+        print("task_list(2):", task_list);
+        print("task_list(3):", task_list);
 result["tasks"] = task_list
 result["hasNewHosts"] = hasNewHosts
 try:
@@ -373,4 +439,3 @@ except:
 conn.commit()
 cursor.close()
 conn.close()
-

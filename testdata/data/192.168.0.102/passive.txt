@@ -1,0 +1,176 @@
+IP:106.39.246.43
+Service Type(1):http 
+This IP pairs appears only once!
+
+IP:106.39.246.41
+Service Type(1):http 
+This IP pairs appears only once!
+
+IP:74.125.204.101
+Service Type(1):http 
+The Network Traffic:148 bytes/s
+The Frequency:2 packets/s
+
+IP:203.208.41.69
+Service Type(1):https 
+The Network Traffic:55 bytes/s
+The Frequency:0 packets/s
+
+IP:35.163.61.28
+Service Type(1):https 
+The Network Traffic:5 bytes/s
+The Frequency:0 packets/s
+
+IP:36.110.147.35
+Service Type(1):http 
+The Network Traffic:1221 bytes/s
+The Frequency:11 packets/s
+
+IP:36.110.147.36
+Service Type(1):http 
+This IP pairs appears only once!
+
+IP:74.125.204.113
+Service Type(1):http 
+The Network Traffic:296 bytes/s
+The Frequency:4 packets/s
+
+IP:203.208.40.69
+Service Type(1):https 
+The Network Traffic:54 bytes/s
+The Frequency:0 packets/s
+
+IP:112.95.241.169
+Service Type(1):http 
+The Network Traffic:46 bytes/s
+The Frequency:0 packets/s
+
+IP:219.133.60.209
+Service Type(1):http 
+The Network Traffic:77 bytes/s
+The Frequency:0 packets/s
+
+IP:182.254.3.59
+Service Type(1):http 
+The Network Traffic:46 bytes/s
+The Frequency:0 packets/s
+
+IP:112.95.234.65
+Service Type(1):http 
+The Network Traffic:46 bytes/s
+The Frequency:0 packets/s
+
+IP:119.147.193.107
+Service Type(1):http 
+The Network Traffic:46 bytes/s
+The Frequency:0 packets/s
+
+IP:101.226.129.161
+Service Type(1):http 
+The Network Traffic:13 bytes/s
+The Frequency:0 packets/s
+
+IP:101.226.212.22
+Service Type(1):http 
+The Network Traffic:31 bytes/s
+The Frequency:0 packets/s
+
+IP:118.112.22.145
+Service Type(1):http 
+The Network Traffic:62 bytes/s
+The Frequency:0 packets/s
+
+IP:118.112.11.147
+Service Type(1):http 
+The Network Traffic:312 bytes/s
+The Frequency:0 packets/s
+
+IP:118.112.22.141
+Service Type(1):https 
+The Network Traffic:52 bytes/s
+The Frequency:0 packets/s
+
+IP:14.18.245.237
+Service Type(1):http 
+The Network Traffic:644 bytes/s
+The Frequency:1 packets/s
+
+IP:91.189.89.199
+Service Type(1):ntp 
+The Network Traffic:0 bytes/s
+The Frequency:0 packets/s
+
+IP:36.110.171.43
+Service Type(1):http 
+The Network Traffic:1221 bytes/s
+The Frequency:11 packets/s
+
+IP:36.110.171.40
+Service Type(1):http 
+This IP pairs appears only once!
+
+IP:74.125.204.138
+Service Type(1):http 
+The Network Traffic:296 bytes/s
+The Frequency:4 packets/s
+
+IP:203.208.41.72
+Service Type(1):https 
+The Network Traffic:55 bytes/s
+The Frequency:0 packets/s
+
+IP:104.197.3.80
+Service Type(1):http 
+The Network Traffic:1 bytes/s
+The Frequency:0 packets/s
+
+IP:23.209.36.106
+Service Type(1):http 
+The Network Traffic:40 bytes/s
+The Frequency:0 packets/s
+
+IP:10.0.2.2
+Service Type(2):bootps http 
+The Network Traffic:0 bytes/s
+The Frequency:0 packets/s
+
+IP:255.255.255.255
+Service Type(1):bootps 
+The Network Traffic:0 bytes/s
+The Frequency:0 packets/s
+
+IP:224.0.0.22
+Service Type(1):IGMP 
+The Network Traffic:21 bytes/s
+The Frequency:0 packets/s
+
+IP:0.0.0.0
+Service Type(2):IGMP bootps 
+The Network Traffic:45 bytes/s
+The Frequency:0 packets/s
+
+IP:224.0.0.251
+Service Type(1):mdns 
+The Network Traffic:1 bytes/s
+The Frequency:0 packets/s
+
+IP:61.139.2.69
+Service Type(1):domain 
+The Network Traffic:8 bytes/s
+The Frequency:0 packets/s
+
+IP:104.198.143.177
+Service Type(1):http 
+The Network Traffic:1 bytes/s
+The Frequency:0 packets/s
+
+IP:14.18.245.239
+Service Type(1):http 
+The Network Traffic:75 bytes/s
+The Frequency:0 packets/s
+
+IP:10.0.2.15
+Service Type(7):http domain mdns bootps IGMP https ntp 
+The Network Traffic:137 bytes/s
+The Frequency:0 packets/s
+

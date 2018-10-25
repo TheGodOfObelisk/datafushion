@@ -1,5 +1,6 @@
+#-*- coding: UTF-8 -*- 
 import re,os,sys
-
+#编辑于2018年10月25日
 osweights = {
     'Microsoft Server 2008':10,
     'Windows Server 2008':10,
@@ -143,6 +144,23 @@ def passive_dp(file_full_path):
             items.append(item)
     f.close()
     return items
+
+def router_dp(file_full_path):
+	"""resolve the router file"""
+	try:
+		f = open(file_full_path,'r')
+	except:
+		print('No Found File:%s',file_full_path)
+	items = []
+	for line in f.readlines():
+		if line.strip():
+			m1 = re.findall('^(.*)',line.strip());
+			if m1:
+				item = m1[0].split(' ')
+				for ip in item:
+					items.append(ip)
+	f.close()
+	return items
 
 def get_result_list(root_dir):
     try:

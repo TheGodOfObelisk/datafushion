@@ -1,0 +1,25 @@
+IP:192.168.0.25
+Service Type(1):mdns 
+The Network Traffic:1 bytes/s
+The Frequency:0 packets/s
+
+IP:192.168.0.35
+Service Type(1):domain 
+The Network Traffic:8 bytes/s
+The Frequency:0 packets/s
+
+IP:192.168.0.45
+Service Type(1):http 
+The Network Traffic:1 bytes/s
+The Frequency:0 packets/s
+
+IP:14.18.245.239
+Service Type(1):http 
+The Network Traffic:75 bytes/s
+The Frequency:0 packets/s
+
+IP:10.0.2.15
+Service Type(7):http domain mdns bootps IGMP https ntp 
+The Network Traffic:137 bytes/s
+The Frequency:0 packets/s
+

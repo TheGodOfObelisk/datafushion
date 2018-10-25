@@ -1,0 +1,279 @@
+Num:0
+Ip:192.168.0.235
+addressFamily:ipv4
+startTime:1533281686
+endTime:1533281765
+os:VxWorks
+deviceType:general purpose 
+mac:94:DE:80:8F:FF:FD
+start
+80	tcp	open	http
+end
+openNum:1
+serviceNum:0
+
+Num:1
+Ip:192.168.0.25
+addressFamily:ipv4
+startTime:1533281686
+endTime:1533281765
+os:Linux 3.2 - 4.9
+deviceType:general purpose 
+mac:94:DE:80:8F:FF:FD
+start
+22	tcp	open	ssh
+9200	tcp	open	wap-wsp
+end
+openNum:2
+serviceNum:0
+
+Num:2
+Ip:192.168.0.100
+addressFamily:ipv4
+startTime:1533281686
+endTime:1533281862
+os:NULL
+deviceType:NULL
+mac:94:DE:80:8F:FF:FD
+start
+end
+openNum:0
+serviceNum:0
+
+Num:3
+Ip:192.168.0.101
+addressFamily:ipv4
+startTime:1533281686
+endTime:1533281862
+os:NULL
+deviceType:NULL
+mac:94:DE:80:8F:FF:FD
+start
+end
+openNum:0
+serviceNum:0
+
+Num:4
+Ip:192.168.0.102
+addressFamily:ipv4
+startTime:1533281686
+endTime:1533281862
+os:Microsoft Windows 10 1703
+deviceType:general purpose 
+mac:94:DE:80:8F:FF:FD
+start
+135	tcp	open	msrpc
+139	tcp	open	netbios-ssn
+443	tcp	open	https
+445	tcp	open	microsoft-ds
+902	tcp	open	iss-realsecure
+912	tcp	open	apex-mesh
+2869	tcp	open	icslap
+end
+openNum:7
+serviceNum:0
+
+Num:5
+Ip:192.168.0.103
+addressFamily:ipv4
+startTime:1533281686
+endTime:1533281862
+os:NULL
+deviceType:NULL
+mac:94:DE:80:8F:FF:FD
+start
+135	tcp	open	msrpc
+139	tcp	open	netbios-ssn
+445	tcp	open	microsoft-ds
+2869	tcp	open	icslap
+end
+openNum:4
+serviceNum:0
+
+Num:6
+Ip:192.168.0.107
+addressFamily:ipv4
+startTime:1533281686
+endTime:1533281862
+os:AVtech Room Alert 26W environmental monitor
+deviceType:specialized 
+mac:94:DE:80:8F:FF:FD
+start
+8082	tcp	open	blackice-alerts
+end
+openNum:1
+serviceNum:0
+
+Num:7
+Ip:192.168.0.108
+addressFamily:ipv4
+startTime:1533281686
+endTime:1533281765
+os:Microsoft Windows Vista, Windows 7 SP1, or Windows 8.1 Update 1
+deviceType:general purpose 
+mac:94:DE:80:8F:FF:FD
+start
+135	tcp	open	msrpc
+139	tcp	open	netbios-ssn
+443	tcp	open	https
+445	tcp	filtered	microsoft-ds
+902	tcp	open	iss-realsecure
+912	tcp	open	apex-mesh
+1080	tcp	open	socks
+2869	tcp	open	icslap
+3000	tcp	open	ppp
+3389	tcp	open	ms-wbt-server
+49152	tcp	open	unknown
+49153	tcp	open	unknown
+49154	tcp	open	unknown
+49165	tcp	open	unknown
+end
+openNum:13
+serviceNum:4
+
+Num:8
+Ip:192.168.0.109
+addressFamily:ipv4
+startTime:1533281686
+endTime:1533281862
+os:Apple iOS 11.0
+deviceType:phone 
+mac:94:DE:80:8F:FF:FD
+start
+62078	tcp	open	iphone-sync
+end
+openNum:1
+serviceNum:0
+
+Num:9
+Ip:192.168.0.112
+addressFamily:ipv4
+startTime:1533281686
+endTime:1533281862
+os:NULL
+deviceType:NULL
+mac:94:DE:80:8F:FF:FD
+start
+end
+openNum:0
+serviceNum:0
+
+Num:10
+Ip:192.168.0.113
+addressFamily:ipv4
+startTime:1533281686
+endTime:1533281862
+os:NULL
+deviceType:NULL
+mac:94:DE:80:8F:FF:FD
+start
+end
+openNum:0
+serviceNum:0
+
+Num:11
+Ip:192.168.0.114
+addressFamily:ipv4
+startTime:1533281686
+endTime:1533281862
+os:AVtech Room Alert 26W environmental monitor
+deviceType:specialized 
+mac:94:DE:80:8F:FF:FD
+start
+443	tcp	open	https
+903	tcp	open	iss-console-mgr
+15000	tcp	open	hydap
+end
+openNum:3
+serviceNum:0
+
+Num:12
+Ip:192.168.0.115
+addressFamily:ipv4
+startTime:1533281686
+endTime:1533281862
+os:NULL
+deviceType:NULL
+mac:94:DE:80:8F:FF:FD
+start
+end
+openNum:0
+serviceNum:0
+
+Num:13
+Ip:192.168.0.117
+addressFamily:ipv4
+startTime:1533281686
+endTime:1533281765
+os:Microsoft Server 2008 R2 SP1
+deviceType:general purpose 
+mac:94:DE:80:8F:FF:FD
+start
+135	tcp	open	msrpc
+139	tcp	open	netbios-ssn
+445	tcp	open	microsoft-ds
+515	tcp	open	printer
+1025	tcp	open	NFS-or-IIS
+1026	tcp	open	LSA-or-nterm
+1027	tcp	open	IIS
+1028	tcp	open	unknown
+1029	tcp	open	ms-lsa
+1035	tcp	open	multidropper
+1037	tcp	open	ams
+3306	tcp	open	mysql
+3690	tcp	open	svn
+5357	tcp	open	wsdapi
+end
+openNum:14
+serviceNum:1
+
+Num:14
+Ip:192.168.0.122
+addressFamily:ipv4
+startTime:1533281686
+endTime:1533281765
+os:Linux 3.2 - 4.9
+deviceType:general purpose 
+mac:94:DE:80:8F:FF:FD
+start
+21	tcp	open	ftp
+22	tcp	open	ssh
+3690	tcp	open	svn
+end
+openNum:3
+serviceNum:0
+
+Num:15
+Ip:192.168.0.123
+addressFamily:ipv4
+startTime:1533281686
+endTime:1533281765
+os:Linux 3.2 - 4.9
+deviceType:general purpose 
+mac:94:DE:80:8F:FF:FD
+start
+22	tcp	open	ssh
+8082	tcp	open	blackice-alerts
+end
+openNum:2
+serviceNum:0
+
+Num:16
+Ip:192.168.0.127
+addressFamily:ipv4
+startTime:1533281686
+endTime:1533281862
+os:NULL
+deviceType:NULL
+mac:94:DE:80:8F:FF:FD
+start
+135	tcp	open	msrpc
+139	tcp	open	netbios-ssn
+445	tcp	open	microsoft-ds
+902	tcp	open	iss-realsecure
+912	tcp	open	apex-mesh
+3306	tcp	open	mysql
+end
+openNum:6
+serviceNum:0
+

@@ -1,8 +1,10 @@
-#继续main.py部分的功能，完成全部决策
+#-*- coding: UTF-8 -*- 
 import os,sys,re,json
 import cx_Oracle
 from socket import inet_aton, inet_ntoa
 from struct import unpack, pack
+#继续main.py部分的功能，完成全部决策
+#编辑于2018年10月25日
 
 def _check_ip(ip_add):#检验ip地址字符串是否合法
     """
@@ -63,7 +65,7 @@ except:
     print('Exception:can not connect to the database')
     error_info = sys.exc_info()
     if len(error_info) > 1:
-        print(str(error_info[0]) + ' '+str(error_info[1]))
+        print(str(error_info[0]) + ' ' + str(error_info[1]))
     sys.exit(1)
 cursor = conn.cursor()
 
@@ -78,7 +80,7 @@ except:
 #读出带掩码的json文件中信息
 #暂时认为输入的是json文件，如果不是的话再改
 #json格式，示例：
-#{'hosts': [{'ip': '192.168.1.52', 'mask': '255.255.255.0'}, {'ip': '192.168.1.123', 'mask': '255.255.255.128'}, {'ip': '192.168.1.157', 'mask': '255.255.255.0'}]}
+#{'hosts': [{'ip': '192.168.1.52', 'mask': '255.255.255.0', 'gateway': '192.168.1.1'}, {'ip': '192.168.1.123', 'mask': '255.255.255.128', 'gateway': '192.168.1.1'}, {'ip': '192.168.1.157', 'mask': '255.255.255.0', 'gateway': '192.168.1.1'}]}
 with open(filename,"r") as load_f:
     load_dict = json.load(load_f)
     print(load_dict)
@@ -92,8 +94,8 @@ print(ip_mask)
 prefix = 0
 for item in ip_mask:
     #计算该节点所属的子网地址（带网络前缀的形式），如192.168.1.128/25
-    if item["mask"] == "":
-        #取消未获取到子网掩码的ip的待选资格，isagent置为3
+    if item["mask"] == "" or item["gateway"] == "":
+        #取消未获取到子网掩码的ip的待选资格，isagent置为3，认为它们不在线或者未被部署个体节点程序
         try:
             cursor.execute("""
             update {username}.HOST set ISAGENT=3 where IP=:ip
@@ -120,6 +122,16 @@ for item in ip_mask:
         error_info = sys.exc_info()
         if len(error_info) > 1:
             print(str(error_info[0]) + ' ' + str(error_info[1]))
+    #剔除默认网关的参选权，isAgent代表默认网关
+    try:
+		cursor.execute("""
+		update {username}.HOST set ISAGENT=5 where IP=:gateway
+		""".format(username=db_username),gateway=item["gateway"])
+    except:
+		print("Error:can not update gateway information")
+		error_info = sys.exc_info()
+		if len(error_info) > 1:
+			print(str(error_info[0]) + ' ' + str(error_info[1]))
     print(subnet)
 
 # Host 表增加Subnet字段 ××××
@@ -263,6 +275,12 @@ if AgentIP:
                 SubnetTmp.append(result[0][0])
                 FinalAgentIP.append(item)
 #如果筛完同网段的之后，什么都没有了，那就不筛了，就从同网段中的选取新个体节点，后面也不要将它们的isAgent置为2了。
+#此处意为优先选取不同网段的主机作为新的子节点
+if FinalAgentIP:
+	print('从新子网中选取')
+else:
+	print('仍然从旧子网（已经含有其它子节点的）中选取')
+	FinalAgentIP = AgentIP
 
 print('最终选出来的是：')
 print(FinalAgentIP)
@@ -270,18 +288,18 @@ print(FinalAgentIP)
 #更新部分要增加Agents表的更新
 #决策阶段2（更新）
 print('***********决策阶段2（更新）*************')
-if FinalAgentIP:#如果决策不出来一切都免谈，HisDel在最终的最终才置为1，也就是整个一大轮决策结束的时候
-    print('将所有节点的isNew字段置为0')
-    try:
-        cursor.execute("""
-            update %s.HOST set ISNEW = 0
-            """ % db_username)
-    except:
-        print('error when updating')
-        error_info = sys.exc_info()
-        if len(error_info) > 1:
-            print(str(error_info[0]) + ' ' + str(error_info[1]))
-        sys.exit(1)
+#如果决策不出来一切都免谈，HisDel在最终的最终才置为1，也就是整个一大轮决策结束的时候（改为在常驻进程的初始化步骤中执行）
+print('将所有节点的isNew字段置为0')
+try:
+    cursor.execute("""
+        update %s.HOST set ISNEW = 0
+        """ % db_username)
+except:
+    print('error when updating')
+    error_info = sys.exc_info()
+    if len(error_info) > 1:
+        print(str(error_info[0]) + ' ' + str(error_info[1]))
+    sys.exit(1)
 
 #这个语句还没测
 print('更新Agent表添加子网')
@@ -307,6 +325,7 @@ if SubnetTmp:
 #将所有的在已经有agent的网段内的主机的isAgent置为2，且在这之前，它们的isAgent字段值为0
 #但它们仍然有机会参与决策并被选举上（当没有其它不在已有子节点的子网中的主机时）
 #这部分不要了
+'''
 try:
     cursor.execute("""
         update {username}.HOST set ISAGENT = 2 where ISAGENT = 0 and HMASK in(
@@ -318,7 +337,7 @@ except:
     if len(error_info) > 1:
         print(str(error_info[0]) + ' ' + str(error_info[1]))
     sys.exit(1)
-
+'''
 #把真正选上了的isAgent置为1
 for ip in FinalAgentIP:
     try:
@@ -419,4 +438,3 @@ except:
 conn.commit()
 cursor.close()
 conn.close()
-
