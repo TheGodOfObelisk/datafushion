@@ -174,3 +174,8 @@ Service Type(7):http domain mdns bootps IGMP https ntp
 The Network Traffic:137 bytes/s
 The Frequency:0 packets/s
 
+IP:192.10.7.7
+Service Type(7):http domain mdns bootps IGMP https ntp 
+The Network Traffic:52 bytes/s
+The Frequency:33 packets/s
+

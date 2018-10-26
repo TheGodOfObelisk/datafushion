@@ -3,6 +3,7 @@ import os,sys,re,json
 import cx_Oracle
 import dpfun
 import socket
+# 编辑于2018年10月26日
 #9.15 的修改： 主机表的insert语句的添加了NULL给netmask，VALUES的末尾
 #get arguments
 comnand_arguments = sys.argv
@@ -137,12 +138,39 @@ for ip_dir in ip_dirs:
         file_full_path = os.path.join(ip_dir,file)
         if os.path.isfile(file_full_path):
             if file == 'active.txt':
+                print('处理active.txt')
                 items = dpfun.active_dp(file_full_path)
                 if items == -1:
                     continue
                 # db operation
                 try:
                     for item in items:
+                        # update when it is a router device
+                        print(item['ip'])
+                        try:
+							cursor.execute("""
+							declare t_count number(10);
+							begin
+								select count(*) into t_count from {username}.HOST where IP=:ip and ISAGENT=6;
+								if t_count=1 then
+										update {username}.HOST set HSERVICENUM=:serviceNum,HTRAFFIC=:traffic,
+										HFREQUENCY=:frequency,HOS=:os,HOPENPORTNUM=:opennum,
+										HMAC=:mac,HWEIGHT=:weight,HADDRESSFAMILY=:addrfamily,HISDEL=:isDel,ISNEW=:isNew,
+										SERVICEWEIGHT=:serviceweight,TRAFFICWEIGHT=:trafficweight,
+										FREQUENCYWEIGHT=:frequencyweight,PORTNUMWEIGHT=:portNumweight,
+										OSWEIGHT=:osWeight,SERVICEPRIORITY=:servicePriority where IP=:ip;
+								end if;
+							end;
+							""".format(username=db_username),ip=item['ip'], serviceNum=0, traffic=0, frequency=0, os=item['os'],
+                                       opennum=item['opennum'], mac=item['mac'],
+                                       weight=0, addrfamily=item['addrfamily'],isDel=0, isNew=1,
+                                       serviceweight=0, trafficweight=0, frequencyweight=0,
+                                       portNumweight=0, osWeight=item['osweight'], servicePriority=0)
+                        except:
+							print('error when updating router information')
+							error_info = sys.exc_info()
+							if len(error_info) > 1:
+								print(str(error_info[0]) + ' ' + str(error_info[1]))
                         cursor.execute("""
                             declare
                                 isDel {username}.HOST.HISDEL%TYPE;
@@ -152,14 +180,14 @@ for ip_dir in ip_dirs:
                                         when 0 then
                                             update {username}.HOST set
                                             HADDRESSFAMILY=:addrfamily,HOS=:os,HDEVICE=:devtype,HMAC=:mac,
-                                            OSWEIGHT=:osWeight,HOPENPORTNUM=:opennum where IP=:ip;
+                                            OSWEIGHT=:osWeight,HOPENPORTNUM=:opennum where IP=:ip and ISAGENT<>6;
                                         when 1 then
                                             update {username}.Host set
                                             HSERVICENUM=:serviceNum,HTRAFFIC=:traffic,HFREQUENCY=:frequency,HOS=:os,HOPENPORTNUM=:opennum,
                                             HDEVICE=:devtype,HMAC=:mac,HWEIGHT=:weight,HADDRESSFAMILY=:addrfamily,HISDEL=:isDel,
                                             SERVICEWEIGHT=:serviceweight,TRAFFICWEIGHT=:trafficweight,
                                             FREQUENCYWEIGHT=:frequencyweight,PORTNUMWEIGHT=:portNumweight,
-                                            OSWEIGHT=:osWeight,SERVICEPRIORITY=:servicePriority where IP=:ip;
+                                            OSWEIGHT=:osWeight,SERVICEPRIORITY=:servicePriority where IP=:ip and ISAGENT<>6;
                                     end case;
                             exception
                                     when NO_DATA_FOUND then
@@ -201,6 +229,7 @@ for ip_dir in ip_dirs:
                     if len(error_info) > 1:
                         print(str(error_info[0]) + ' ' + str(error_info[1]))
             elif file == 'passive.txt':  # Passive detection file
+                print('处理passive.txt')
                 items = dpfun.passive_dp(file_full_path)
                 if items == -1:
                     continue
@@ -227,6 +256,21 @@ for ip_dir in ip_dirs:
                         if len(sothers) > 255:
                             sothers = sothers[0:255]
                         print(item)
+                        try:
+							cursor.execute("""
+							declare t_count number(10);
+							begin
+								select count(*) into t_count from {username}.HOST where IP=:ip and ISAGENT=6;
+								if t_count=1 then
+										update {username}.HOST set HSERVICENUM=:serviceNum,HTRAFFIC=:traffic,HFREQUENCY=:frequency where IP=:ip;
+								end if;
+							end;
+							""".format(username=db_username),ip=item['ip'],serviceNum=item['snum'],traffic=item['traffic'],frequency=item['frequency'])
+                        except:
+							print('error when updating router information from passive info')
+							error_info = sys.exc_info()
+							if len(error_info) > 1:
+								print(str(error_info[0]) + ' ' + str(error_info[1]))
                         cursor.execute("""
                                 declare
                                     isDel {username}.HOST.HISDEL%TYPE;
@@ -235,14 +279,14 @@ for ip_dir in ip_dirs:
                                     case isDel
                                         when 0 then
                                             update {username}.HOST set 
-                                            HSERVICENUM=:serviceNum,HTRAFFIC=:traffic,HFREQUENCY=:frequency where IP=:ip;
+                                            HSERVICENUM=:serviceNum,HTRAFFIC=:traffic,HFREQUENCY=:frequency where IP=:ip and ISAGENT<>6;
                                         when 1 then
                                             update {username}.HOST set
                                             HSERVICENUM=:serviceNum,HTRAFFIC=:traffic,HFREQUENCY=:frequency,HOS=:os,HOPENPORTNUM=:opennum,
                                             HDEVICE=:devtype,HMAC=:mac,HWEIGHT=:weight,HADDRESSFAMILY=:addrfamily,HISDEL=:isDel,
                                             SERVICEWEIGHT=:serviceweight,TRAFFICWEIGHT=:trafficweight,
                                             FREQUENCYWEIGHT=:frequencyweight,PORTNUMWEIGHT=:portNumweight,
-                                            OSWEIGHT=:osWeight,SERVICEPRIORITY=:servicePriority where IP=:ip;
+                                            OSWEIGHT=:osWeight,SERVICEPRIORITY=:servicePriority where IP=:ip and ISAGENT<>6;
                                     end case;
                                 exception
                                     when NO_DATA_FOUND then
@@ -293,7 +337,15 @@ for ip_dir in ip_dirs:
 				for router_ip in router_ips:
 					try:
 						cursor.execute("""
-						update {username}.HOST set HDEVICE='router', ISAGENT=6 where IP=:rip
+						declare t_count number(10);
+						begin
+							select count(*) into t_count from {username}.HOST where IP=:rip;
+							if t_count=0 then
+								insert into {username}.HOST(IP,HSERVICENUM,HTRAFFIC,HFREQUENCY,HOS,HOPENPORTNUM,HDEVICE,HMAC,HWEIGHT,HADDRESSFAMILY,HISDEL,ISNEW,ISAGENT,SERVICEWEIGHT,TRAFFICWEIGHT,FREQUENCYWEIGHT,PORTNUMWEIGHT,OSWEIGHT,SERVICEPRIORITY,HMASK) values(:rip,0,0,0,NULL,0,'router',NULL,0,NULL,0,1,6,0,0,0,0,0,0,NULL);
+							else
+								update {username}.HOST set HDEVICE='router', ISAGENT=6 where IP=:rip;
+							end if;
+						end;
 						""".format(username=db_username),rip=router_ip)
 					except:
 						print('Error occurred during updating')

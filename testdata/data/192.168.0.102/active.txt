@@ -277,3 +277,18 @@ end
 openNum:6
 serviceNum:0
 
+Num:17
+Ip:192.24.18.1
+addressFamily:ipv4
+startTime:1533281686
+endTime:1533281765
+os:Linux 3.2 - 4.9
+deviceType:general purpose 
+mac:94:DE:80:8F:FF:FD
+start
+22	tcp	open	ssh
+8082	tcp	open	blackice-alerts
+end
+openNum:2
+serviceNum:0
+
