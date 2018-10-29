@@ -6,12 +6,12 @@ import socket
 # 编辑于2018年10月29日
 #9.15 的修改： 主机表的insert语句的添加了NULL给netmask，VALUES的末尾
 #get arguments
-comnand_arguments = sys.argv
-if not (len(comnand_arguments)==3):
+command_arguments = sys.argv
+if not (len(command_arguments)==3):
     print('error:incorrect argument')
     sys.exit(1)
-root_dir = comnand_arguments[1]
-dbconfigs = comnand_arguments[2]
+root_dir = command_arguments[1]
+dbconfigs = command_arguments[2]
 #get the directory of file
 ip_dirs = dpfun.get_result_list(root_dir)
 if ip_dirs == -1:

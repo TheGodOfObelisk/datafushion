@@ -3,6 +3,7 @@ import os,sys,re,json
 import cx_Oracle
 from socket import inet_aton, inet_ntoa
 from struct import unpack, pack
+from IPy import IP
 #继续main.py部分的功能，完成全部决策
 #编辑于2018年10月25日
 
@@ -51,13 +52,14 @@ def mask2prefix(mask):#输入为字符串（子网掩码），输出为整数（
 
 #第一个参数，含子网的json文件
 #第二个参数，数据库连接信息
-comnand_arguments = sys.argv
-if not (len(comnand_arguments)==3):
+#第三个参数，他们的数据库连接信息
+command_arguments = sys.argv
+if not (len(command_arguments)==4):
     print('error:incorrect argument')
     sys.exit(1)
-filename = comnand_arguments[1]
-dbconfigs = comnand_arguments[2]
-
+filename = command_arguments[1]
+dbconfigs = command_arguments[2]
+dbconfigs_target = command_arguments[3]
 #connect to the database
 try:
     conn = cx_Oracle.connect(dbconfigs)
@@ -69,6 +71,16 @@ except:
     sys.exit(1)
 cursor = conn.cursor()
 
+try:
+    conn_target = cx_Oracle.connect(dbconfigs_target)
+except:
+    print('Exception:can not connect to the database')
+    error_info = sys.exc_info()
+    if len(error_info) > 1:
+        print(str(error_info[0]) + ' ' + str(error_info[1]))
+    sys.exit(1)
+cursor_target = conn_target.cursor()
+
 #get username
 m_user = re.findall('^(.*)/(.*)@(.*):(.*)/(.*)$',dbconfigs.strip())
 try:
@@ -76,6 +88,82 @@ try:
 except:
     print('Exception:can not get database username')
     sys.exit(1)
+
+def get_topo_ips(items):
+    """obtain relevant routers' ip based on subnet"""
+    composite_items = []
+    if items == []:
+        return -1
+    for item in items:
+        atom_item = []
+        router_flag = 0
+        atom_item.append(item)
+        net_prefix = item.split(',')[1]
+        net = net_prefix.split('/')[0]
+        mask = update_mask(int(net_prefix.split('/')[1]))
+        default_gateway = item.split(',')[2]
+        try:
+            cursor_target.execute('select IP,NET from ROUTER')
+            routers = cursor_target.fetchall() 
+        except Exception as err:
+            print(err)
+            return -1
+        #read data from ROUTER
+        if cursor_target.rowcount == 0:
+            return -1
+        for router in routers:
+            ips_str = str(router[0])
+            if router[1]!='Unknown': #the net field is not empty
+                if router[1]==net:
+                    router_flag = 1
+                    atom_item.append(ips_str.split(',')[0])   #get the first ip
+                    composite_items.append(atom_item)
+                    break
+            ips = ips_str.split(',')
+            for ip in ips:
+                router_net = str(IP(ip).make_net(mask)).split('/',1)[0]
+                if router_net == net:
+                    router_flag = 1
+                    atom_item.append(ip)
+                    composite_items.append(atom_item)
+                    break
+            if router_flag == 1:
+                break
+
+        #not get router ip
+        if router_flag == 0:
+            if default_gateway!='Unknown':
+                atom_item.append(default_gateway)
+                composite_items.append(atom_item)
+                continue
+            net_split = net.split('.')
+            ip = net_split[0]+'.'+net_split[1]+'.'+net_split[2]+'.1'
+            atom_item.append(ip)
+            composite_items.append(atom_item)
+
+    return composite_items
+
+def parse_items(double_items):
+    ip_item = []
+    if double_items == []:
+        return -1
+    for items in double_items:
+        host_ip = items[0].split(',')[0]
+        router_ip = items[1]
+        ips = host_ip + ',' + router_ip
+        ip_item.append(ips)
+    return ip_item
+
+
+def update_mask(mask_int):
+    """Transfer number to mask"""
+    bin_arr = ['0' for i in range(32)]
+    for i in range(mask_int):
+        bin_arr[i] = '1'
+    tmpmask = [''.join(bin_arr[i * 8:i * 8 + 8]) for i in range(4)]
+    tmpmask = [str(int(tmpstr,2)) for tmpstr in tmpmask]
+    return '.'.join(tmpmask)
+
 
 #读出带掩码的json文件中信息
 #暂时认为输入的是json文件，如果不是的话再改
@@ -277,10 +365,10 @@ if AgentIP:
 #如果筛完同网段的之后，什么都没有了，那就不筛了，就从同网段中的选取新个体节点，后面也不要将它们的isAgent置为2了。
 #此处意为优先选取不同网段的主机作为新的子节点
 if FinalAgentIP:
-	print('从新子网中选取')
+    print('从新子网中选取')
 else:
-	print('仍然从旧子网（已经含有其它子节点的）中选取')
-	FinalAgentIP = AgentIP
+    print('仍然从旧子网（已经含有其它子节点的）中选取')
+    FinalAgentIP = AgentIP
 
 print('最终选出来的是：')
 print(FinalAgentIP)
@@ -309,12 +397,12 @@ if SubnetTmp:
         try:
             cursor.execute("""
             declare t_count number(10);
-							begin
-								select count(*) into t_count from {username}.AGENT where NET=:subnet;
-								if t_count=0 then
-									insert into {username}.AGENT(NET) values(:subnet);
-								end if;
-							end;
+                            begin
+                                select count(*) into t_count from {username}.AGENT where NET=:subnet;
+                                if t_count=0 then
+                                    insert into {username}.AGENT(NET) values(:subnet);
+                                end if;
+                            end;
             """.format(username=db_username),subnet=net)
         except:
             print('error when inserting')
@@ -355,7 +443,39 @@ for ip in FinalAgentIP:
 print('****************决策结束*****************')
 
 #确认拓扑发现的参数，调用函数并传入一个（ip，子网地址，默认网关）的三元组数组
+input_traid = []
+traid_elem = ""
+for ip in FinalAgentIP:
+    traid_elem = ip
+    try:
+        cursor.execute("""
+        select HMASK from {username}.HOST where IP=:tip
+        """.format(username=db_username),tip=ip)
+        result = cursor.fetchall()
+        if result:
+            tmp_str = ',' + result[0][0]
+            traid_elem += tmp_str
+        else:
+            traid_elem += ','
+    except:
+        print('error when selecting HMASK from HOST')
+        error_info = sys.exc_info()
+        if len(error_info) > 1:
+            print(str(error_info[0]) + ' ' + str(error_info[1]))
+    has_gateway = False
+    for item in ip_mask:
+        if item['ip'] == ip and item['gateway']:
+            tmp_str = ',' + item['gateway']
+            traid_elem += tmp_str
+            has_gateway = True
+    if not has_gateway:
+        tmp_str = ',' + 'Unknown'
+        traid_elem += tmp_str
+    input_traid.append(traid_elem)
+print('待输入的三元组数组：')
+print(input_traid)
 
+ips_items = parse_items(get_topo_ips(input_traid))
 
 
 # 根据子网内容设置主动探测参数
@@ -406,7 +526,14 @@ if FinalAgentIP:
         thost.append(FinalAgentIP[index]+":"+"9998")
         task1["taskArguments"] = activearg[index]
         task2["taskArguments"] = "-G 600 -P " + FinalAgentIP[index]
-        task3["taskArguments"] =""
+        task3["taskArguments"] = ""
+        for ips_item in ips_items:
+            host_ip = ips_item.split(',')[0]
+            router_ip = ips_item.split(',')[1]
+            if host_ip == FinalAgentIP[index]:
+                task3["taskArguments"] = router_ip
+        if task3["taskArguments"] == "":
+            print('Error: fail to generate suitable argument for topology discovery')
         tmpahost = []
         tmpphost = []
         tmpthost = []
@@ -441,3 +568,6 @@ except:
 conn.commit()
 cursor.close()
 conn.close()
+conn_target.commit()
+cursor_target.close()
+conn_target.close()
