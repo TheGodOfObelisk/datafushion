@@ -122,7 +122,7 @@ for item in ip_mask:
         error_info = sys.exc_info()
         if len(error_info) > 1:
             print(str(error_info[0]) + ' ' + str(error_info[1]))
-    #剔除默认网关的参选权，isAgent代表默认网关
+    #剔除默认网关的参选权，isAgent为5代表默认网关
     try:
         cursor.execute("""
         update {username}.HOST set ISAGENT=5 where IP=:gateway
@@ -284,6 +284,7 @@ else:
 
 print('最终选出来的是：')
 print(FinalAgentIP)
+
 #上面的内容尚未作详细测试
 #更新部分要增加Agents表的更新
 #决策阶段2（更新）
@@ -352,6 +353,8 @@ for ip in FinalAgentIP:
         sys.exit(1)
 
 print('****************决策结束*****************')
+
+#确认拓扑发现的参数，调用函数并传入一个（ip，子网地址，默认网关）的三元组数组
 
 
 

@@ -151,7 +151,7 @@ for ip_dir in ip_dirs:
                             cursor.execute("""
                             declare t_count number(10);
                             begin
-                                select count(*) into t_count from {username}.HOST where IP=:ip and ISAGENT=6;
+                                select count(*) into t_count from {username}.HOST where IP=:ip and ISAGENT=5;
                                 if t_count=1 then
                                         update {username}.HOST set HSERVICENUM=:serviceNum,HTRAFFIC=:traffic,
                                         HFREQUENCY=:frequency,HOS=:os,HOPENPORTNUM=:opennum,
@@ -180,14 +180,14 @@ for ip_dir in ip_dirs:
                                         when 0 then
                                             update {username}.HOST set
                                             HADDRESSFAMILY=:addrfamily,HOS=:os,HDEVICE=:devtype,HMAC=:mac,
-                                            OSWEIGHT=:osWeight,HOPENPORTNUM=:opennum where IP=:ip and ISAGENT<>6;
+                                            OSWEIGHT=:osWeight,HOPENPORTNUM=:opennum where IP=:ip and ISAGENT<>5;
                                         when 1 then
                                             update {username}.Host set
                                             HSERVICENUM=:serviceNum,HTRAFFIC=:traffic,HFREQUENCY=:frequency,HOS=:os,HOPENPORTNUM=:opennum,
                                             HDEVICE=:devtype,HMAC=:mac,HWEIGHT=:weight,HADDRESSFAMILY=:addrfamily,HISDEL=:isDel,
                                             SERVICEWEIGHT=:serviceweight,TRAFFICWEIGHT=:trafficweight,
                                             FREQUENCYWEIGHT=:frequencyweight,PORTNUMWEIGHT=:portNumweight,
-                                            OSWEIGHT=:osWeight,SERVICEPRIORITY=:servicePriority where IP=:ip and ISAGENT<>6;
+                                            OSWEIGHT=:osWeight,SERVICEPRIORITY=:servicePriority where IP=:ip and ISAGENT<>5;
                                     end case;
                             exception
                                     when NO_DATA_FOUND then
@@ -260,7 +260,7 @@ for ip_dir in ip_dirs:
                             cursor.execute("""
                          declare t_count number(10);
                          begin
-                                select count(*) into t_count from {username}.HOST where IP=:ip and ISAGENT=6;
+                                select count(*) into t_count from {username}.HOST where IP=:ip and ISAGENT=5;
                                 if t_count=1 then
                                         update {username}.HOST set HSERVICENUM=:serviceNum,HTRAFFIC=:traffic,HFREQUENCY=:frequency where IP=:ip;
                                 end if;
@@ -279,14 +279,14 @@ for ip_dir in ip_dirs:
                                     case isDel
                                         when 0 then
                                             update {username}.HOST set 
-                                            HSERVICENUM=:serviceNum,HTRAFFIC=:traffic,HFREQUENCY=:frequency where IP=:ip and ISAGENT<>6;
+                                            HSERVICENUM=:serviceNum,HTRAFFIC=:traffic,HFREQUENCY=:frequency where IP=:ip and ISAGENT<>5;
                                         when 1 then
                                             update {username}.HOST set
                                             HSERVICENUM=:serviceNum,HTRAFFIC=:traffic,HFREQUENCY=:frequency,HOS=:os,HOPENPORTNUM=:opennum,
                                             HDEVICE=:devtype,HMAC=:mac,HWEIGHT=:weight,HADDRESSFAMILY=:addrfamily,HISDEL=:isDel,
                                             SERVICEWEIGHT=:serviceweight,TRAFFICWEIGHT=:trafficweight,
                                             FREQUENCYWEIGHT=:frequencyweight,PORTNUMWEIGHT=:portNumweight,
-                                            OSWEIGHT=:osWeight,SERVICEPRIORITY=:servicePriority where IP=:ip and ISAGENT<>6;
+                                            OSWEIGHT=:osWeight,SERVICEPRIORITY=:servicePriority where IP=:ip and ISAGENT<>5;
                                     end case;
                                 exception
                                     when NO_DATA_FOUND then
@@ -341,9 +341,9 @@ for ip_dir in ip_dirs:
                         begin
                             select count(*) into t_count from {username}.HOST where IP=:rip;
                             if t_count=0 then
-                                insert into {username}.HOST(IP,HSERVICENUM,HTRAFFIC,HFREQUENCY,HOS,HOPENPORTNUM,HDEVICE,HMAC,HWEIGHT,HADDRESSFAMILY,HISDEL,ISNEW,ISAGENT,SERVICEWEIGHT,TRAFFICWEIGHT,FREQUENCYWEIGHT,PORTNUMWEIGHT,OSWEIGHT,SERVICEPRIORITY,HMASK) values(:rip,0,0,0,NULL,0,'router',NULL,0,NULL,0,1,6,0,0,0,0,0,0,NULL);
+                                insert into {username}.HOST(IP,HSERVICENUM,HTRAFFIC,HFREQUENCY,HOS,HOPENPORTNUM,HDEVICE,HMAC,HWEIGHT,HADDRESSFAMILY,HISDEL,ISNEW,ISAGENT,SERVICEWEIGHT,TRAFFICWEIGHT,FREQUENCYWEIGHT,PORTNUMWEIGHT,OSWEIGHT,SERVICEPRIORITY,HMASK) values(:rip,0,0,0,NULL,0,'router',NULL,0,NULL,0,1,5,0,0,0,0,0,0,NULL);
                             else
-                                update {username}.HOST set HDEVICE='router', ISAGENT=6 where IP=:rip;
+                                update {username}.HOST set HDEVICE='router', ISAGENT=5 where IP=:rip;
                             end if;
                         end;
                         """.format(username=db_username),rip=router_ip)
