@@ -1,10 +1,10 @@
 IP:106.39.246.43
 Service Type(1):http 
-This IP pairs appears only once!
+This IP appears only once!
 
 IP:106.39.246.41
 Service Type(1):http 
-This IP pairs appears only once!
+This IP appears only once!
 
 IP:74.125.204.101
 Service Type(1):http 
@@ -28,7 +28,7 @@ The Frequency:11 packets/s
 
 IP:36.110.147.36
 Service Type(1):http 
-This IP pairs appears only once!
+This IP appears only once!
 
 IP:74.125.204.113
 Service Type(1):http 
@@ -107,7 +107,7 @@ The Frequency:11 packets/s
 
 IP:36.110.171.40
 Service Type(1):http 
-This IP pairs appears only once!
+This IP appears only once!
 
 IP:74.125.204.138
 Service Type(1):http 

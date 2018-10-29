@@ -18,7 +18,7 @@ import datetime
 import os_update
 import resolve_file
 #import unittest
-
+#编辑于2018年10月26日
 # ====== config ======
 HOST = 'localhost'
 PORT = 3368
@@ -191,7 +191,7 @@ def update_os():
 				osString = L
 			elif re.search('Windows Server 2008|Windows 2000|Windows XP SP3|Windows 7|Windows 8|Windows 10|Linux',osString)==None:
 				osString = List[0]
-		var = {'os':osString,'ip':os[0]}
+		var = {'os':osString[0:10],'ip':os[0]}
 		sql = 'update HOST set HOS=:os where IP=:ip' 
 		update_oracle(sql,var)
 
@@ -228,7 +228,7 @@ def update_host():
 			print("The rowcount",cursor_target.rowcount)
 			if cursor_target.rowcount == 0:
 				#print("The rowcount",cursor.rowcount)
-				var = {'id':str(uuid.uuid1()),'os':os,'net':NET,'ip':ip,'mac':mac}
+				var = {'id':str(uuid.uuid1()),'os':os[0:10],'net':NET,'ip':ip,'mac':mac}
 				sql = (
 					"insert into HOST (ID,UPDATED,OS,NET,IP,PORT,BUSINESSTYPE,MAC,PROCESS,ATTACKED,KEY,ENTRY)"
 					"values(:id,'1',:os,:net,:ip,34,'telnet',:mac,'chrome.exe','0','1','1')"
@@ -242,7 +242,7 @@ def update_host():
 						NET = host[2]
 					if host[3] != 'Unknown' and mac == 'Unknown':
 						mac = host[3] 
-					var = {'id':'%s'%host[0],'os':os,'net':NET,'mac':mac}
+					var = {'id':'%s'%host[0],'os':os[0:10],'net':NET,'mac':mac}
 				sql = "update HOST set OS=:os,NET=:NET,MAC=:mac where IP=:id"
 			update_oracle_target(sql,var)
 		except Exception as err:
@@ -412,10 +412,10 @@ def update_router(file_full_path):
 						net = router[2]
 					if router[3] != 'Unknown' and mac == 'Unknown':
 						mac = router[3] 
-					var = {'id':router[0],'os':os,'net':net,'port':portnum,'business':servicenum,'mac':mac}
+					var = {'id':router[0],'os':os[0:10],'net':net,'port':portnum,'business':servicenum,'mac':mac}
 					sql = 'update ROUTER set OS=:os,NET=:net,PORT=:port,BUSINESSTYPE=:business,MAC=:mac where ID=:id'
 				else:
-					var = {'id':str(uuid.uuid1()),'os':os,'ip':IP[0],'net':net,'port':portnum,'business':servicenum,'mac':mac}
+					var = {'id':str(uuid.uuid1()),'os':os[0:10],'ip':IP[0],'net':net,'port':portnum,'business':servicenum,'mac':mac}
 					sql = (
 						"insert into ROUTER (ID,UPDATED,OS,IP,NET,PORT,BUSINESSTYPE,MAC,PROCESS,ATTACKED,KEY)"
 						"values(:id,'1',:os,:ip,:net,:port,:business,:mac,'chrome.exe','0','0')"
@@ -666,7 +666,7 @@ def update_site(number):
 		if location == None:
 			location = 'Unknown'
 		number = number + 1
-		var = {'id':str(uuid.uuid1()),'name':'site' + str(number),'detail':'This is site-' + str(number),'address':location,'net':net[0]}
+		var = {'id':str(uuid.uuid1()),'name':'site' + str(number),'detail':'This is site-' + str(number),'address':location[0:20],'net':net[0]}
 		sql = (
 			"insert into SITE (ID,UPDATED,STATUS,NAME,DETAIL,ADDRESS,NET,TYPE)"
 			"values(:id,'1','online',:name,:detail,:address,:net,2)"
@@ -770,6 +770,16 @@ class switch_case(object):
 		#中心节点本身也需要加入表中且isAgent字段为2（不参与决策），只考虑插入我们的数据库
 		localip = ""
 		localip = get_host_ip()
+		#先清理前一大轮的数据
+		try:
+			cursor.execute("""
+			update {username}.HOST set HISDEL=1
+			""".format(username=db_username))
+		except:
+			print("Error:fail to clear data")
+			error_info = sys.exc_info()
+			if len(error_info) > 1:
+				print(str(error_info[0]) + ' ' + str(error_info[1]))
 		try:
 			cursor.execute("""
 						declare

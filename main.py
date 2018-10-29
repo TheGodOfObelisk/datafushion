@@ -3,7 +3,7 @@ import os,sys,re,json
 import cx_Oracle
 import dpfun
 import socket
-# 编辑于2018年10月26日
+# 编辑于2018年10月29日
 #9.15 的修改： 主机表的insert语句的添加了NULL给netmask，VALUES的末尾
 #get arguments
 comnand_arguments = sys.argv
@@ -51,31 +51,31 @@ with open("config.json","r") as load_f:
             host_subnet = item['taskArguments']
             print(host_subnet)
             print(host_ip)
-        try:
-            cursor.execute("""
-                declare
-                    isAgent {username}.HOST.ISAGENT%TYPE;
-                begin
-                    select ISAGENT into isAgent from {username}.HOST where IP=:ip;
-                        case isAgent
-                            when 0 then
-                                update {username}.HOST set ISAGENT = 1,ISNEW = 0,HISDEL = 0 where IP=:ip;
-                            when 1 then
-                                update {username}.HOST set ISNEW = 0,HISDEL = 0 where IP=:ip;
-                            when 2 then
-                                update {username}.HOST set ISAGENT = 1,ISNEW = 1,HISDEL = 0 where IP=:ip;
-                        end case;
-                exception
-                        when NO_DATA_FOUND then
-                            insert into {username}.HOST values(:ip,0,0,0,NULL,0,NULL,NULL,0,NULL,
-                                                0,0,1,0,0,0,0,0,0,:subnet);
-                end;
-            """.format(username=db_username),ip=host_ip,subnet=host_subnet)
-        except:
-            print("Error:can not initialize database")
-            error_info = sys.exc_info()
-            if len(error_info) > 1:
-                print(str(error_info[0]) + ' ' + str(error_info[1]))
+            try:
+                cursor.execute("""
+                    declare
+                        isAgent {username}.HOST.ISAGENT%TYPE;
+                    begin
+                        select ISAGENT into isAgent from {username}.HOST where IP=:ip;
+                            case isAgent
+                                when 0 then
+                                    update {username}.HOST set ISAGENT = 1,ISNEW = 0,HISDEL = 0 where IP=:ip;
+                                when 1 then
+                                    update {username}.HOST set ISNEW = 0,HISDEL = 0 where IP=:ip;
+                                when 2 then
+                                    update {username}.HOST set ISAGENT = 1,ISNEW = 1,HISDEL = 0 where IP=:ip;
+                            end case;
+                    exception
+                            when NO_DATA_FOUND then
+                                insert into {username}.HOST values(:ip,0,0,0,NULL,0,NULL,NULL,0,NULL,
+                                                    0,0,1,0,0,0,0,0,0,:subnet);
+                    end;
+                """.format(username=db_username),ip=host_ip,subnet=host_subnet)
+            except:
+                print("Error:can not initialize database")
+                error_info = sys.exc_info()
+                if len(error_info) > 1:
+                    print(str(error_info[0]) + ' ' + str(error_info[1]))
 #再处理中心节点自身的信息（自身不参与选举），它所属的子网不加到agents表中（既不参选也不影响参选）
 def get_host_ip():
     """
@@ -148,29 +148,29 @@ for ip_dir in ip_dirs:
                         # update when it is a router device
                         print(item['ip'])
                         try:
-							cursor.execute("""
-							declare t_count number(10);
-							begin
-								select count(*) into t_count from {username}.HOST where IP=:ip and ISAGENT=6;
-								if t_count=1 then
-										update {username}.HOST set HSERVICENUM=:serviceNum,HTRAFFIC=:traffic,
-										HFREQUENCY=:frequency,HOS=:os,HOPENPORTNUM=:opennum,
-										HMAC=:mac,HWEIGHT=:weight,HADDRESSFAMILY=:addrfamily,HISDEL=:isDel,ISNEW=:isNew,
-										SERVICEWEIGHT=:serviceweight,TRAFFICWEIGHT=:trafficweight,
-										FREQUENCYWEIGHT=:frequencyweight,PORTNUMWEIGHT=:portNumweight,
-										OSWEIGHT=:osWeight,SERVICEPRIORITY=:servicePriority where IP=:ip;
-								end if;
-							end;
-							""".format(username=db_username),ip=item['ip'], serviceNum=0, traffic=0, frequency=0, os=item['os'],
+                            cursor.execute("""
+                            declare t_count number(10);
+                            begin
+                                select count(*) into t_count from {username}.HOST where IP=:ip and ISAGENT=6;
+                                if t_count=1 then
+                                        update {username}.HOST set HSERVICENUM=:serviceNum,HTRAFFIC=:traffic,
+                                        HFREQUENCY=:frequency,HOS=:os,HOPENPORTNUM=:opennum,
+                                        HMAC=:mac,HWEIGHT=:weight,HADDRESSFAMILY=:addrfamily,HISDEL=:isDel,ISNEW=:isNew,
+                                        SERVICEWEIGHT=:serviceweight,TRAFFICWEIGHT=:trafficweight,
+                                        FREQUENCYWEIGHT=:frequencyweight,PORTNUMWEIGHT=:portNumweight,
+                                        OSWEIGHT=:osWeight,SERVICEPRIORITY=:servicePriority where IP=:ip;
+                                end if;
+                            end;
+                            """.format(username=db_username),ip=item['ip'], serviceNum=0, traffic=0, frequency=0, os=item['os'],
                                        opennum=item['opennum'], mac=item['mac'],
                                        weight=0, addrfamily=item['addrfamily'],isDel=0, isNew=1,
                                        serviceweight=0, trafficweight=0, frequencyweight=0,
                                        portNumweight=0, osWeight=item['osweight'], servicePriority=0)
                         except:
-							print('error when updating router information')
-							error_info = sys.exc_info()
-							if len(error_info) > 1:
-								print(str(error_info[0]) + ' ' + str(error_info[1]))
+                            print('error when updating router information')
+                            error_info = sys.exc_info()
+                            if len(error_info) > 1:
+                                print(str(error_info[0]) + ' ' + str(error_info[1]))
                         cursor.execute("""
                             declare
                                 isDel {username}.HOST.HISDEL%TYPE;
@@ -257,20 +257,20 @@ for ip_dir in ip_dirs:
                             sothers = sothers[0:255]
                         print(item)
                         try:
-							cursor.execute("""
-							declare t_count number(10);
-							begin
-								select count(*) into t_count from {username}.HOST where IP=:ip and ISAGENT=6;
-								if t_count=1 then
-										update {username}.HOST set HSERVICENUM=:serviceNum,HTRAFFIC=:traffic,HFREQUENCY=:frequency where IP=:ip;
-								end if;
-							end;
-							""".format(username=db_username),ip=item['ip'],serviceNum=item['snum'],traffic=item['traffic'],frequency=item['frequency'])
+                            cursor.execute("""
+                         declare t_count number(10);
+                         begin
+                                select count(*) into t_count from {username}.HOST where IP=:ip and ISAGENT=6;
+                                if t_count=1 then
+                                        update {username}.HOST set HSERVICENUM=:serviceNum,HTRAFFIC=:traffic,HFREQUENCY=:frequency where IP=:ip;
+                                end if;
+                            end;
+                            """.format(username=db_username),ip=item['ip'],serviceNum=item['snum'],traffic=item['traffic'],frequency=item['frequency'])
                         except:
-							print('error when updating router information from passive info')
-							error_info = sys.exc_info()
-							if len(error_info) > 1:
-								print(str(error_info[0]) + ' ' + str(error_info[1]))
+                            print('error when updating router information from passive info')
+                            error_info = sys.exc_info()
+                            if len(error_info) > 1:
+                                print(str(error_info[0]) + ' ' + str(error_info[1]))
                         cursor.execute("""
                                 declare
                                     isDel {username}.HOST.HISDEL%TYPE;
@@ -332,27 +332,27 @@ for ip_dir in ip_dirs:
                     if len(error_info) > 1:
                         print(str(error_info[0]) + ' ' + str(error_info[1]))
             elif file == 'router.txt': #generated by topology discovery
-				print('处理router.txt')
-				router_ips = dpfun.router_dp(file_full_path)
-				for router_ip in router_ips:
-					try:
-						cursor.execute("""
-						declare t_count number(10);
-						begin
-							select count(*) into t_count from {username}.HOST where IP=:rip;
-							if t_count=0 then
-								insert into {username}.HOST(IP,HSERVICENUM,HTRAFFIC,HFREQUENCY,HOS,HOPENPORTNUM,HDEVICE,HMAC,HWEIGHT,HADDRESSFAMILY,HISDEL,ISNEW,ISAGENT,SERVICEWEIGHT,TRAFFICWEIGHT,FREQUENCYWEIGHT,PORTNUMWEIGHT,OSWEIGHT,SERVICEPRIORITY,HMASK) values(:rip,0,0,0,NULL,0,'router',NULL,0,NULL,0,1,6,0,0,0,0,0,0,NULL);
-							else
-								update {username}.HOST set HDEVICE='router', ISAGENT=6 where IP=:rip;
-							end if;
-						end;
-						""".format(username=db_username),rip=router_ip)
-					except:
-						print('Error occurred during updating')
-						error_info = sys.exc_info()
-						if len(error_info) > 1:
-							print(str(error_info[0]) + ' ' + str(error_info[1]))
-				
+                print('处理router.txt')
+                router_ips = dpfun.router_dp(file_full_path)
+                for router_ip in router_ips:
+                    try:
+                        cursor.execute("""
+                        declare t_count number(10);
+                        begin
+                            select count(*) into t_count from {username}.HOST where IP=:rip;
+                            if t_count=0 then
+                                insert into {username}.HOST(IP,HSERVICENUM,HTRAFFIC,HFREQUENCY,HOS,HOPENPORTNUM,HDEVICE,HMAC,HWEIGHT,HADDRESSFAMILY,HISDEL,ISNEW,ISAGENT,SERVICEWEIGHT,TRAFFICWEIGHT,FREQUENCYWEIGHT,PORTNUMWEIGHT,OSWEIGHT,SERVICEPRIORITY,HMASK) values(:rip,0,0,0,NULL,0,'router',NULL,0,NULL,0,1,6,0,0,0,0,0,0,NULL);
+                            else
+                                update {username}.HOST set HDEVICE='router', ISAGENT=6 where IP=:rip;
+                            end if;
+                        end;
+                        """.format(username=db_username),rip=router_ip)
+                    except:
+                        print('Error occurred during updating')
+                        error_info = sys.exc_info()
+                        if len(error_info) > 1:
+                            print(str(error_info[0]) + ' ' + str(error_info[1]))
+                
 
 # 数据库操作：包括计算权值和决策两部分
 # 权值计算：（涉及更新各个子权值，排序决定的子权值在赋值之前应当全部置零）
@@ -361,25 +361,25 @@ for ip_dir in ip_dirs:
 # 3.通信量：排序决定
 # 4.通信频次：排序决定
 # 5.业务优先级：由最高的那个决定
-# 属性值	分值
-# TELNET	10
-# SNMP	9
-# ICMP	8
-# DNS	    7
-# HTTP	6
-# FTP	    5
-# TFTP	4
-# NTP	    3
-# POP3	2
-# SMTP	1
+# 属性值    分值
+# TELNET    10
+# SNMP    9
+# ICMP    8
+# DNS        7
+# HTTP    6
+# FTP        5
+# TFTP    4
+# NTP        3
+# POP3    2
+# SMTP    1
 # 6..总权值计算及更新
-# 属性	比例	最高分值
-# 业务优先级	0.3	10
-# 业务种类	0.1	10
-# 通信量	0.2	10
-# 通信频次	0.2	10
-# 操作系统	0.1	10
-# 开放端口数	0.1	10
+# 属性    比例    最高分值
+# 业务优先级    0.3    10
+# 业务种类    0.1    10
+# 通信量    0.2    10
+# 通信频次    0.2    10
+# 操作系统    0.1    10
+# 开放端口数    0.1    10
 # 其中：操作系统：一一映射（模式匹配）数据融合阶段已完成
 # 决策：
 # 1.按总权值排序取主机信息

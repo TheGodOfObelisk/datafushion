@@ -1,6 +1,6 @@
-#-*- coding: UTF-8 -*- 
+﻿#-*- coding: UTF-8 -*- 
 import re,os,sys
-#编辑于2018年10月25日
+#编辑于2018年10月29日
 osweights = {
     'Microsoft Server 2008':10,
     'Windows Server 2008':10,
@@ -135,7 +135,7 @@ def passive_dp(file_full_path):
             if m4:
                 item['frequency'] = int(m4[0])
                 continue
-            m5 = re.findall('^This IP pairs appears only once!', line.strip())
+            m5 = re.findall('^This IP appears only once!', line.strip())
             if m5:
                 item['traffic'] = 0
                 item['frequency'] = 0

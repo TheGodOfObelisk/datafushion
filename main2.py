@@ -124,14 +124,14 @@ for item in ip_mask:
             print(str(error_info[0]) + ' ' + str(error_info[1]))
     #剔除默认网关的参选权，isAgent代表默认网关
     try:
-		cursor.execute("""
-		update {username}.HOST set ISAGENT=5 where IP=:gateway
-		""".format(username=db_username),gateway=item["gateway"])
+        cursor.execute("""
+        update {username}.HOST set ISAGENT=5 where IP=:gateway
+        """.format(username=db_username),gateway=item["gateway"])
     except:
-		print("Error:can not update gateway information")
-		error_info = sys.exc_info()
-		if len(error_info) > 1:
-			print(str(error_info[0]) + ' ' + str(error_info[1]))
+        print("Error:can not update gateway information")
+        error_info = sys.exc_info()
+        if len(error_info) > 1:
+            print(str(error_info[0]) + ' ' + str(error_info[1]))
     print(subnet)
 
 # Host 表增加Subnet字段 ××××
