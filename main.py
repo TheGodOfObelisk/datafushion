@@ -3,7 +3,7 @@ import os,sys,re,json
 import cx_Oracle
 import dpfun
 import socket
-# 编辑于2018年10月29日
+# 编辑于2018年10月31日
 #9.15 的修改： 主机表的insert语句的添加了NULL给netmask，VALUES的末尾
 #get arguments
 command_arguments = sys.argv
@@ -36,6 +36,7 @@ try:
 except:
     print('Exception:can not get database username')
     sys.exit(1)
+#ISAGENT字段，0代表一般主机，1代表子节点，2代表中心节点，3代表联系不上的主机（不在线或者未部署个体节点程序），5代表路由设备（涵盖默认网关）
 #start of my editing
 #preprocess
 #先处理第一轮探测的子节点信息，从config.json中读取
@@ -93,24 +94,23 @@ def get_host_ip():
 localip = ""
 if __name__ == '__main__':
     localip = get_host_ip()
-try:
+print('localip: ', localip)
+try:#处理中心节点自身，将它的isAgent置为2
     cursor.execute("""
                 declare
                     isAgent {username}.HOST.ISAGENT%TYPE;
                 begin
                     select ISAGENT into isAgent from {username}.HOST where IP=:ip;
                         case isAgent
-                            when 0 then
-                                update {username}.HOST set ISAGENT = 2, ISNEW = 0, HISDEL = 0 where IP=:ip;
-                            when 1 then
-                                update {username}.HOST set ISAGENT = 2,ISNEW = 0,HISDEL = 0 where IP=:ip;
                             when 2 then
                                 update {username}.HOST set ISNEW = 0,HISDEL = 0 where IP=:ip;
+                            else
+                                update {username}.HOST set ISAGENT = 2,ISNEW = 0, HISDEL = 0 where IP=:ip;
                         end case;
                 exception
                         when NO_DATA_FOUND then
                             insert into {username}.HOST values(:ip,0,0,0,NULL,0,NULL,NULL,0,NULL,
-                                                0,0,1,0,0,0,0,0,0,NULL);
+                                                0,0,2,0,0,0,0,0,0,NULL);
                 end;
             """.format(username=db_username), ip=localip)
 except:
@@ -119,6 +119,17 @@ except:
     if len(error_info) > 1:
         print(str(error_info[0]) + ' ' + str(error_info[1]))
 #end of my editing
+
+#个体节点必然在线
+try:
+    cursor.execute("""
+    update {username}.HOST set HISDEL=0 where ISAGENT=1
+    """.format(username=db_username))
+except:
+    print("Error:can not reset the state of individual agent")
+    error_info = sys.exc_info()
+    if len(error_info) > 1:
+        print(str(error_info[0]) + ' ' + str(error_info[1]))
 
 #process
 for ip_dir in ip_dirs:
@@ -383,7 +394,7 @@ for ip_dir in ip_dirs:
 # 其中：操作系统：一一映射（模式匹配）数据融合阶段已完成
 # 决策：
 # 1.按总权值排序取主机信息
-# 2.isAgent字段已为1或者2的主机不参与决策
+# 2.isAgent字段已为1、2或者5的主机不参与决策
 # 3.总权值并列第一的主机只取第一个（暂定）
 # 4.优先在新发现的节点中选取（isnew字段为1）
 # 5.收尾工作（把所有的isnew字段置为0，所有的HisDel字段置为1，并将选取出来的新节点的isAgent字段置为1，把同一个子网内已经有其他agent的主机的isAgent字段置为2）
