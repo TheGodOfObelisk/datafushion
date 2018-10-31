@@ -89,6 +89,7 @@ except:
     print('Exception:can not get database username')
     sys.exit(1)
 
+"""start"""
 def get_topo_ips(items):
     """obtain relevant routers' ip based on subnet"""
     composite_items = []
@@ -154,6 +155,7 @@ def parse_items(double_items):
         ip_item.append(ips)
     return ip_item
 
+"""end"""
 
 def update_mask(mask_int):
     """Transfer number to mask"""

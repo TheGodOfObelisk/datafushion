@@ -41,7 +41,7 @@ except:
 #preprocess
 #先处理第一轮探测的子节点信息，从config.json中读取
 #要修改，因为第一轮可能有不止一个agent，不能简单得取一个
-#。。。。除了初始插入，还要把子网信息填上，子网信息就从config.json中获取
+#除了初始插入，还要把子网信息填上，子网信息就从config.json中获取
 with open("config.json","r") as load_f:
     load_dict = json.load(load_f)
     print(load_dict)
