@@ -26,7 +26,7 @@ def protocol_resolve(file_full_path):
 			if m4:
 				item['traffic'] = int(m4[0])
 				continue
-			m5 = re.findall('^This IP appears only once!',line.strip())
+			m5 = re.findall('^This IP pairs appears only once!',line.strip())
 			if m5:
 				item['traffic'] = 0
 				continue
@@ -60,10 +60,11 @@ def router_resolve(file_full_path):
 		f = open(file_full_path,'r')
 	except FileNotFoundError as err:
 		print('No Found File:%s %s',file_full_path,err)
+		return -1
 	items = []
 	for line in f.readlines():
 		if line.strip():
-			m1 = re.findall('^(.*)',line.strip());
+			m1 = re.findall('^(.*)',line.strip())
 			if m1:
 				item = {}
 				item['router'] = m1[0].split(' ')

@@ -146,7 +146,7 @@ def get_topo_ips(items):
 
 def parse_items(double_items):
     ip_item = []
-    if double_items == []:
+    if double_items == [] or double_items == -1:
         return -1
     for items in double_items:
         host_ip = items[0].split(',')[0]
@@ -527,15 +527,14 @@ if FinalAgentIP:
         phost.append(FinalAgentIP[index]+":"+"8081")
         thost.append(FinalAgentIP[index]+":"+"9998")
         task1["taskArguments"] = activearg[index]
-        task2["taskArguments"] = "-G 600 -P " + FinalAgentIP[index]
-        task3["taskArguments"] = ""
-        for ips_item in ips_items:
-            host_ip = ips_item.split(',')[0]
-            router_ip = ips_item.split(',')[1]
-            if host_ip == FinalAgentIP[index]:
-                task3["taskArguments"] = router_ip
-        if task3["taskArguments"] == "":
-            print('Error: fail to generate suitable argument for topology discovery')
+        task2["taskArguments"] = "-G 60 -P " + FinalAgentIP[index]
+        task3["taskArguments"] = "127.0.0.1"
+        if ips_items != -1:
+            for ips_item in ips_items:
+                host_ip = ips_item.split(',')[0]
+                router_ip = ips_item.split(',')[1]
+                if host_ip == FinalAgentIP[index]:
+                    task3["taskArguments"] = router_ip
         tmpahost = []
         tmpphost = []
         tmpthost = []

@@ -2,6 +2,7 @@
   '/home/lw/dataf917/datafusion/dpfun.py'],
  ['/home/lw/dataf917/datafusion',
   '/home/lw/dataf917/datafusion',
+  '/usr/local/lib/python2.7/dist-packages',
   '/home/lw/dataf917/datafusion'],
  ['codecs'],
  [],

@@ -4,7 +4,7 @@ block_cipher = None
 
 
 a = Analysis(['main.py', 'dpfun.py'],
-             pathex=['/home/lw/dataf917/datafusion'],
+             pathex=['/usr/local/lib/python2.7/dist-packages', '/home/lw/dataf917/datafusion'],
              binaries=[],
              datas=[],
              hiddenimports=[],

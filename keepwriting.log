@@ -1,0 +1,8 @@
+2018-11-14 16:44:42,928 - DEBUG - This message should go to the log file
+2018-11-14 16:44:42,928 - INFO - So should this
+2018-11-14 16:44:42,928 - WARNING - And this, too
+2018-11-14 16:44:57,943 - WARNING - I am late
+2018-11-14 16:48:24,991 - DEBUG - This message should go to the log file
+2018-11-14 16:48:24,991 - INFO - So should this
+2018-11-14 16:48:24,991 - WARNING - And this, too
+2018-11-14 16:48:40,007 - WARNING - I am late
